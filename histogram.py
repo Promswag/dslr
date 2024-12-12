@@ -4,8 +4,7 @@ import pandas as pd
 
 def main():
 	data = pd.read_csv("dataset_train.csv")
-	data['Best Hand'] = (data['Best Hand'] == 'Right').astype(int)
-	print(data)
+	# data['Best Hand'] = (data['Best Hand'] == 'Right').astype(int)
 	features = [
 		'Arithmancy',
 		'Astronomy',
@@ -30,8 +29,7 @@ def main():
 	fig.suptitle("Histogram of the Hogwarts House's courses", fontsize=24)
 
 	for i, feature in enumerate(features):
-		j = int(i / 5)
-		ax = axes[j, i % 5]
+		ax = axes[int(i / 5), i % 5]
 		ax.set_title(feature)
 		ax.hist(gryffindor[feature], bins=30, color='r', alpha=0.4)
 		ax.hist(slytherin[feature], bins=30, color='g', alpha=0.4)
