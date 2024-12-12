@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 from textwrap import wrap
-import seaborn as sns
+import seaborn as sns # type: ignore
 
 
 def main():
