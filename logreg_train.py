@@ -7,24 +7,28 @@ def standardize(lst):
 	std = (sum((abs(v - mean) ** 2) for v in lst) / len(lst)) ** 0.5
 	return [(v - mean) / std for v in lst]
 
+def softmax(arr):
+	z = np.exp(arr - np.max(arr, axis=1, keepdims=True))
+	return z / np.sum(z, axis=1, keepdims=True)
+
 def main():
 	# try:
 		data = pd.read_csv("dataset_train.csv")
 		data.dropna(inplace=True)
 		features = [
-			'Arithmancy',
-			'Astronomy',
-			'Herbology',
+			# 'Arithmancy',
+			# 'Astronomy',
+			# 'Herbology',
 			'Defense Against the Dark Arts',
-			'Divination',
-			'Muggle Studies',
+			# 'Divination',
+			# 'Muggle Studies',
 			'Ancient Runes',
-			'History of Magic',
-			'Transfiguration',
-			'Potions',
-			'Care of Magical Creatures',
+			# 'History of Magic',
+			# 'Transfiguration',
+			# 'Potions',
+			# 'Care of Magical Creatures',
 			'Charms',
-			'Flying',
+			# 'Flying',
 		]
 		num_map = {
 			'Gryffindor': 0,
@@ -33,29 +37,53 @@ def main():
 			'Ravenclaw': 3
 		}
 		data['Hogwarts House'] = data['Hogwarts House'].map(num_map)
+		print(data['Hogwarts House'].value_counts())
+		print(f'{len(data)}\n')
 		for f in features:
 			data[f] = standardize(data[f].values)
-		print(data)
 
 		Y = data['Hogwarts House']
-		X = data[['Divination', 'Muggle Studies', 'Herbology', 'History of Magic']]
+		X = data[features]
 		L = 0.01
-		t0 = 0
-		tn = {f: 0 for f in X.columns}
-		m = len(Y)
-		epsilon = 1e-15
+
+		m, n_features = X.shape
+		n_classes = 4
+		bias = np.zeros(n_classes)
+		W = np.zeros((n_classes, n_features))
+
 		for _ in range(1000):
-			w = t0 + sum(tn[f] * X[f].values for f in tn.keys())
-			pred = 1 / (1 + np.exp(np.clip(-w, -709, 709)))
-			cost = - (1 / m) * sum(Y * np.log(pred + epsilon) + (1 - Y) * np.log(1 - pred + epsilon))
-			t0 -= L * (1 / m) * sum(pred - Y)
-			for f in X.columns:
-				tn[f] -= L * (1 / m) * sum((pred - Y) * X[f].values)
-	
-		print(sum(1 for p in pred if p > 0.9))
-		print(data['Hogwarts House'].value_counts())
+			logits = np.dot(X, W.T) + bias
 
+			pred = softmax(logits)
+			grad = pred
+			grad[range(m), Y] -=1
 
+			grad_W = np.dot(grad.T, X) / m
+			W -= L * grad_W
+
+			grad_b = np.sum(grad, axis=0) / m
+			bias -= L * grad_b
+
+		print(W)
+		print(bias)
+
+		epsilon = 1e-15
+
+		logits = np.dot(X, W.T) + bias
+		prob = softmax(logits)
+		pred = np.argmax(prob, axis=1)
+		print(pd.DataFrame(pred).value_counts())
+
+		correct = pd.DataFrame(pred == Y)
+		print(correct.value_counts())
+
+		xd = []
+		for i, p in enumerate(pred):
+			if Y.iloc[i] != pred[i]:
+				xd.append([int(Y.iloc[i]), int(pred[i])])
+		print(xd)
+
+		print(pd.DataFrame(xd).value_counts().sort_values())
 
 	# except Exception as e:
 	# 	print(f'{type(e).__name__} : {e}')
