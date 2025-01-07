@@ -14,7 +14,6 @@ def softmax(arr):
 def main():
 	# try:
 		data = pd.read_csv("dataset_train.csv")
-		data.dropna(inplace=True)
 		features = [
 			# 'Arithmancy',
 			# 'Astronomy',
@@ -30,6 +29,14 @@ def main():
 			'Charms',
 			# 'Flying',
 		]
+		X = data[features + ["Hogwarts House"]]
+		print(X)
+		means = X.groupby("Hogwarts House").mean()
+		X = X.apply(lambda x: x.fillna(means.loc[x["Hogwarts House"]]), axis=1)
+		print(means)
+		# X.fillna(X.mean(), inplace=True)
+		# data.fillna(data.mean(), inplace=True)
+		# data.dropna(inplace=True)
 		num_map = {
 			'Gryffindor': 0,
 			'Slytherin': 1,
@@ -40,10 +47,10 @@ def main():
 		print(data['Hogwarts House'].value_counts())
 		print(f'{len(data)}\n')
 		for f in features:
-			data[f] = standardize(data[f].values)
+			X[f] = standardize(X[f].values)
 
+		X = X[features]
 		Y = data['Hogwarts House']
-		X = data[features]
 		L = 0.01
 
 		m, n_features = X.shape
@@ -67,14 +74,18 @@ def main():
 		print(W)
 		print(bias)
 
-		epsilon = 1e-15
-
 		logits = np.dot(X, W.T) + bias
 		prob = softmax(logits)
 		pred = np.argmax(prob, axis=1)
+
+		print('\n')
 		print(pd.DataFrame(pred).value_counts())
+		print('\n')
+		print(prob[0])
+		print(pred[0])
 
 		correct = pd.DataFrame(pred == Y)
+		print('\n')
 		print(correct.value_counts())
 
 		# xd = []

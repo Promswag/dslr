@@ -1,13 +1,5 @@
 import numpy as np
 
-# def pct(list, p):
-#     p /= 100
-#     list.sort()
-#     l = len(list) - 1
-#     if (l * p).is_integer():
-#         return list[int(l * p)]
-#     else:
-#         return list[int(l * p)] * (float(l * p) - int(l * p)) + list[int(l * p) + 1] * (1 - (float(l * p) - int(l * p)))
     
 def pct(list, p):
     list.sort()
