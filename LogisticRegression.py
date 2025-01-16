@@ -1,45 +1,74 @@
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+# import matplotlib.pyplot as plt
+# import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
 
-class DataPreprocessing():
-	pass
+
+def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
+	data = df.select_dtypes(include='number')
+	classes = {c: i for i, c in enumerate(df[target_name].unique())}
+	data[target_name] = df[target_name].map(classes)
+
+	if keep_na is False:
+		data.dropna(inplace=True)
+	else:
+		means = data.groupby(target_name).mean()
+		data = data.apply(lambda x: x.fillna(means.loc[x[target_name]]), axis=1)
+
+	return data
+
+
+def standardize(lst: pd.Series) -> pd.Series:
+	mean = sum(lst) / len(lst)
+	std = (sum((abs(value - mean) ** 2) for value in lst) / (len(lst) - 1)) ** 0.5
+	return pd.Series((lst - mean) / std)
+
+
+def standardize(feature: pd.Series) -> pd.Series:
+	return (feature - feature.mean()) / feature.std()
+
 
 class LogisticRegression():
-	# def __init__(self, X: np.ndarray[float, int], Y: np.ndarray[float, int], learning_rate: float = 0.1, epochs: int = 1000):
-	def __init__(self, data: pd.DataFrame, target: str, learning_rate: float = 0.1, epochs: int = 1000):
-
+	def __init__(self, features: pd.DataFrame, target: pd.Series, learning_rate: float = 0.1, epochs: int = 1000):
 		try:
-			if len(X) != len(Y):
+			if (features.shape[0] != target.shape[0]):
 				raise ValueError(
-					"LogisticRegression: X and Y must be equal length.")
-			if len(X) < 3:
-				raise ValueError(
-					"LogisticRegression: X and Y must be of length of 3 or more.")
-			for x in X:
-				if not isinstance(x, (float, int)):
-					raise ValueError(
-						"LogisticRegression: X must contain float or int only.")
-			for y in Y:
-				if not isinstance(y, (float, int)):
-					raise ValueError(
-						"LogisticRegression: Y must contain float or int only.")
-			self.m = float(len(X))
-			self.X = X
-			self.Y = Y
-			self.X_n = np.array([self.standardize(x, X) for x in X])
-			self.Y_n = np.array([self.standardize(y, Y) for y in Y])
+					"LogisticRegression: Features and Target must be of the same shape.")
+			self.m, self.n_features = features.shape
+			self.n_classes = len(target.unique())
+			self.features = features
+			self.target = target
 			self.learning_rate = learning_rate
 			self.epochs = epochs
-			self.costs = []
+			self.costs = np.zeros(self.epochs)
+			self.bias = np.zeros(self.n_classes)
+			self.W = np.zeros((self.n_classes, self.n_features))
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
 			return None
 		
-	def standardize(item, lst):
-		item - lst.mean() / lst.std()
-		mean = sum(lst) / len(lst)
-		std = (sum((abs(v - mean) ** 2) for v in lst) / len(lst)) ** 0.5
-		return [(v - mean) / std for v in lst]
-		
+	def gradient_descent(self):
+		for _ in range(self.epochs):
+			logits = np.dot(self.features, self.W.T) + self.bias
+			pred = self.softmax(logits)
+			pred[range(self.m), self.target] -= 1
+
+			self.W -= self.learning_rate * np.dot(pred.T, self.features) / self.m
+			self.bias -= self.learning_rate * np.sum(pred, axis=0) / self.m
+
+
+	def stochastic_gd():
+		pass
+
+	def mini_batch_gd():
+		pass
+
+	def softmax(self, logits):
+		z = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+		return z / np.sum(z, axis=1, keepdims=True)
+	
+	def predict(self, data: pd.DataFrame):
+		logits = np.dot(data, self.W.T) + self.bias
+		probabilies = self.softmax(logits)
+		predictions = np.argmax(probabilies, axis=1)
+		return predictions

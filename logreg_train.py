@@ -14,6 +14,7 @@ def softmax(arr):
 def main():
 	# try:
 		data = pd.read_csv("dataset_train.csv")
+		print(data["Hogwarts House"].unique())
 		features = [
 			# 'Arithmancy',
 			# 'Astronomy',
