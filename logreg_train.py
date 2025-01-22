@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def standardize(lst):
+def standardize(lst: pd.Series):
 	mean = sum(lst) / len(lst)
-	std = (sum((abs(v - mean) ** 2) for v in lst) / len(lst)) ** 0.5
-	return [(v - mean) / std for v in lst]
+	std = (sum((abs(v - mean) ** 2) for v in lst) / (len(lst) - 1)) ** 0.5
+	return pd.Series((lst - mean) / std, index=lst.index)
 
 def softmax(arr):
 	z = np.exp(arr - np.max(arr, axis=1, keepdims=True))
@@ -14,7 +14,8 @@ def softmax(arr):
 def main():
 	# try:
 		data = pd.read_csv("dataset_train.csv")
-		print(data["Hogwarts House"].unique())
+		# data.dropna(inplace=True)
+		# print(data["Hogwarts House"].unique())
 		features = [
 			# 'Arithmancy',
 			# 'Astronomy',
@@ -31,13 +32,10 @@ def main():
 			# 'Flying',
 		]
 		X = data[features + ["Hogwarts House"]]
-		print(X)
+		# print(X)
 		means = X.groupby("Hogwarts House").mean()
 		X = X.apply(lambda x: x.fillna(means.loc[x["Hogwarts House"]]), axis=1)
 		print(means)
-		# X.fillna(X.mean(), inplace=True)
-		# data.fillna(data.mean(), inplace=True)
-		# data.dropna(inplace=True)
 		num_map = {
 			'Gryffindor': 0,
 			'Slytherin': 1,
@@ -45,10 +43,14 @@ def main():
 			'Ravenclaw': 3
 		}
 		data['Hogwarts House'] = data['Hogwarts House'].map(num_map)
-		print(data['Hogwarts House'].value_counts())
-		print(f'{len(data)}\n')
+		print(data['Hogwarts House'])
+		# print(data['Hogwarts House'].value_counts())
+		# print(f'{len(data)}\n')
 		for f in features:
-			X[f] = standardize(X[f].values)
+			X.loc[:,f] = standardize(X[f])
+		X.drop("Hogwarts House", axis=1, inplace=True)
+
+		print(X)
 
 		X = X[features]
 		Y = data['Hogwarts House']
@@ -59,12 +61,11 @@ def main():
 		bias = np.zeros(n_classes)
 		W = np.zeros((n_classes, n_features))
 
-		for _ in range(1000):
+		for i in range(1000):
 			logits = np.dot(X, W.T) + bias
 
-			pred = softmax(logits)
-			grad = pred
-			grad[range(m), Y] -=1
+			grad = softmax(logits)
+			grad[range(m), Y] -= 1
 
 			grad_W = np.dot(grad.T, X) / m
 			W -= L * grad_W
@@ -81,10 +82,6 @@ def main():
 
 		print('\n')
 		print(pd.DataFrame(pred).value_counts())
-		print('\n')
-		print(prob[0])
-		print(pred[0])
-
 		correct = pd.DataFrame(pred == Y)
 		print('\n')
 		print(correct.value_counts())

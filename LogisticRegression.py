@@ -14,6 +14,7 @@ def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd
 	else:
 		means = data.groupby(target_name).mean()
 		data = data.apply(lambda x: x.fillna(means.loc[x[target_name]]), axis=1)
+		data[target_name] = data[target_name].astype(int)
 
 	return data
 
@@ -21,15 +22,11 @@ def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd
 def standardize(lst: pd.Series) -> pd.Series:
 	mean = sum(lst) / len(lst)
 	std = (sum((abs(value - mean) ** 2) for value in lst) / (len(lst) - 1)) ** 0.5
-	return pd.Series((lst - mean) / std)
-
-
-def standardize(feature: pd.Series) -> pd.Series:
-	return (feature - feature.mean()) / feature.std()
+	return pd.Series(((lst - mean) / std), index=lst.index)
 
 
 class LogisticRegression():
-	def __init__(self, features: pd.DataFrame, target: pd.Series, learning_rate: float = 0.1, epochs: int = 1000):
+	def __init__(self, features: pd.DataFrame, target: pd.Series, learning_rate: float = 0.01, epochs: int = 1000):
 		try:
 			if (features.shape[0] != target.shape[0]):
 				raise ValueError(
@@ -40,7 +37,7 @@ class LogisticRegression():
 			self.target = target
 			self.learning_rate = learning_rate
 			self.epochs = epochs
-			self.costs = np.zeros(self.epochs)
+			self.costs = []
 			self.bias = np.zeros(self.n_classes)
 			self.W = np.zeros((self.n_classes, self.n_features))
 		except Exception as e:
@@ -48,17 +45,21 @@ class LogisticRegression():
 			return None
 		
 	def gradient_descent(self):
-		for _ in range(self.epochs):
+		for i in range(self.epochs):
 			logits = np.dot(self.features, self.W.T) + self.bias
 			pred = self.softmax(logits)
 			pred[range(self.m), self.target] -= 1
+			self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
+			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
 
-			self.W -= self.learning_rate * np.dot(pred.T, self.features) / self.m
-			self.bias -= self.learning_rate * np.sum(pred, axis=0) / self.m
 
-
-	def stochastic_gd():
-		pass
+	def stochastic_gd(self):
+		for i in range(self.m):
+			logits = np.dot(self.features.iloc[[i]], self.W.T) + self.bias
+			pred = self.softmax(logits)
+			pred[[0], self.target.iloc[[i]]] -= 1
+			self.W -= self.learning_rate * np.dot(pred.T, self.features.iloc[[i]])
+			self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
 	def mini_batch_gd():
 		pass

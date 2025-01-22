@@ -6,19 +6,42 @@ from LogisticRegression import LogisticRegression
 
 def main():
 	df = pd.read_csv("dataset_train.csv")
-	df = preprocessing(df, "Hogwarts House", keep_na=False)
+	df = preprocessing(df, "Hogwarts House", keep_na=True)
 	features = [
 		'Defense Against the Dark Arts',
 		'Ancient Runes',
 		'Charms',
 	]
-	data = df[features]
-	lr = LogisticRegression(data, df["Hogwarts House"])
-	lr.gradient_descent()
-	print(lr.bias)
+	data = pd.DataFrame()
+	for f in features:
+		data.loc[:, f] = standardize(df[f])
+	target = df["Hogwarts House"]
 
-	pred = lr.predict(data)
-	print(pred)
+	print(data)
+
+	# lr = LogisticRegression(data, target)
+	# lr.gradient_descent()
+	# print(lr.W)
+	# print(lr.bias)
+
+	# pred = lr.predict(data)
+	# print('\n')
+	# print(pd.DataFrame(pred).value_counts())
+	# correct = pd.DataFrame(pred == target)
+	# print('\n')
+	# print(correct.value_counts())
+
+	l = LogisticRegression(data, target)
+	l.stochastic_gd()
+	print(l.W)
+	print(l.bias)
+
+	pred = l.predict(data)
+	print('\n')
+	print(pd.DataFrame(pred).value_counts())
+	correct = pd.DataFrame(pred == target)
+	print('\n')
+	print(correct.value_counts())
 
 
 if __name__ == "__main__":
