@@ -45,7 +45,7 @@ class LogisticRegression():
 			return None
 		
 	def gradient_descent(self):
-		for i in range(self.epochs):
+		for _ in range(self.epochs):
 			logits = np.dot(self.features, self.W.T) + self.bias
 			pred = self.softmax(logits)
 			pred[range(self.m), self.target] -= 1

@@ -43,17 +43,6 @@ def main():
             pct75[f] = pct(df.values, 75)
             maxi[f] = df[count[f] - 1]
 
-        # print(''.ljust(10) + ' '.join(f'{f}'.rjust(10) if len(f) < 11 else f'{f[:9]}.'.rjust(10) for f in features))
-        print(''.ljust(10) + ' '.join(f'{f}'.rjust(len(f)+1) for f in features))
-        print('count'.ljust(10) + ' '.join(f'{count[f]}'.rjust(len(f)+1) for f in features))
-        print('mean'.ljust(10) + ' '.join(f'{mean[f]:.3f}'.rjust(len(f)+1) for f in features))
-        print('std'.ljust(10) + ' '.join(f'{std[f]:.3f}'.rjust(len(f)+1) for f in features))
-        print('min'.ljust(10) + ' '.join(f'{mini[f]:.3f}'.rjust(len(f)+1) for f in features))
-        print('25%'.ljust(10) + ' '.join(f'{pct25[f]:.3f}'.rjust(len(f)+1) for f in features))
-        print('50%'.ljust(10) + ' '.join(f'{pct50[f]:.3f}'.rjust(len(f)+1) for f in features))
-        print('75%'.ljust(10) + ' '.join(f'{pct75[f]:.3f}'.rjust(len(f)+1) for f in features))
-        print('max'.ljust(10) + ' '.join(f'{maxi[f]:.3f}'.rjust(len(f)+1) for f in features))
-
         print(data.describe())
 
     except Exception as e:
