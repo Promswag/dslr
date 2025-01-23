@@ -1,4 +1,4 @@
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd
 		data = data.apply(lambda x: x.fillna(means.loc[x[target_name]]), axis=1)
 		data[target_name] = data[target_name].astype(int)
 
-	return data
+	return data, classes
 
 
 def standardize(lst: pd.Series) -> pd.Series:
@@ -43,15 +43,69 @@ class LogisticRegression():
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
 			return None
-		
+
+	def sigmoid(self, x):
+		return 1 / (1 + np.exp(-np.clip(x, -709, 709)))
+
 	def gradient_descent(self):
-		for i in range(self.epochs):
+		for _ in range(self.epochs):
 			logits = np.dot(self.features, self.W.T) + self.bias
 			pred = self.softmax(logits)
 			pred[range(self.m), self.target] -= 1
 			self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
 			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
 
+		# self.plot_sigmoid()
+		return
+		
+		fig, axes = plt.subplots(ncols=self.n_classes, nrows=self.n_features)
+		for c in range(self.n_classes):  # Loop over each class
+			for f in range(self.n_features):  # Loop over each feature
+				# Generate input values (x) for plotting, assume range of feature values
+				x_values = np.linspace(np.min(self.features.iloc[:, f]), np.max(self.features.iloc[:, f]), 100)
+				# Modify logits for each feature
+				logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				logits_f[:, c] = x_values  # Simulate the effect of changing this feature
+
+				# Apply softmax to get probabilities
+				y_values = self.softmax(logits_f)
+
+				# Plot for the class `c` (probabilities over feature values)
+				ax = axes[f, c]
+				ax.plot(x_values, y_values[:, c], label=f'Class {c}')
+				ax.set_title(f'Feature {f+1} vs Class {c}')
+				ax.set_xlabel(f'Feature {f+1}')
+				ax.set_ylabel('Probability')
+				ax.grid(True)
+		plt.show()
+		
+	def plot_sigmoid(self, df: pd.DataFrame, classes: dict):
+		""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
+		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
+
+		for c in range(self.n_classes):  # Boucle sur chaque classe
+			for f in range(self.n_features):  # Boucle sur chaque feature
+				# Générer des valeurs pour la feature f
+				x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
+				
+				# Modifier les logits en fonction de la feature
+				logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				
+				# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
+				logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
+				
+				# Appliquer la fonction sigmoïde pour obtenir la probabilité
+				y_values = self.sigmoid(logits_f[:, c])
+				
+				# Tracer la probabilité en fonction de la feature
+				ax = axes[f]
+				ax.plot(x_values, y_values, label=f'{list(classes.keys())[list(classes.values()).index(c)]}')
+				ax.set_xlabel(df.columns[f])
+				ax.set_ylabel('Probabilité')
+				ax.grid(True)
+		
+		plt.tight_layout()
+		plt.show()
 
 	def stochastic_gd(self):
 		for i in range(self.m):
@@ -61,8 +115,24 @@ class LogisticRegression():
 			self.W -= self.learning_rate * np.dot(pred.T, self.features.iloc[[i]])
 			self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
-	def mini_batch_gd():
-		pass
+	def mini_batch_gd(self):
+		loop = 10
+		batch_size = 50
+		offset = self.m % batch_size
+		batch_count = int(self.m / batch_size)
+
+		for _ in range(loop):
+			shuffled_features = self.features.sample(frac=1)
+			shuffled_target = self.target.reindex(shuffled_features.index)
+			for i in range(batch_count):
+				batch_features = shuffled_features.iloc[i * batch_size: (i + 1) * batch_size + (offset if i == batch_count - 1 else 0)]
+				batch_target = shuffled_target.iloc[i * batch_size: (i + 1) * batch_size + (offset if i == batch_count - 1 else 0)]
+
+				logits = np.dot(batch_features, self.W.T) + self.bias
+				pred = self.softmax(logits)
+				pred[range(batch_size + (offset if i == batch_count - 1 else 0)), batch_target] -= 1
+				self.W -= self.learning_rate * np.dot(pred.T, batch_features)
+				self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
 	def softmax(self, logits):
 		z = np.exp(logits - np.max(logits, axis=1, keepdims=True))

@@ -86,12 +86,12 @@ def main():
 		print('\n')
 		print(correct.value_counts())
 
-		# xd = []
-		# for i, p in enumerate(pred):
-		# 	if Y.iloc[i] != pred[i]:
-		# 		xd.append([int(Y.iloc[i]), int(pred[i])])
-		# print(xd)
-		# print(pd.DataFrame(xd).value_counts().sort_values())
+		xd = []
+		for i, p in enumerate(pred):
+			if Y.iloc[i] != pred[i]:
+				xd.append([int(Y.iloc[i]), int(pred[i])])
+		print(xd)
+		print(pd.DataFrame(xd).value_counts().sort_values())
 
 	# except Exception as e:
 	# 	print(f'{type(e).__name__} : {e}')
