@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
@@ -19,10 +19,24 @@ def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd
 	return data, classes
 
 
-def standardize(lst: pd.Series) -> pd.Series:
-	mean = sum(lst) / len(lst)
-	std = (sum((abs(value - mean) ** 2) for value in lst) / (len(lst) - 1)) ** 0.5
-	return pd.Series(((lst - mean) / std), index=lst.index)
+def outliers_clamping_by_std(df: pd.DataFrame, target_name: str, std_multiplier: float) -> pd.DataFrame:
+	means = df.groupby(target_name).mean()
+	stds = df.groupby(target_name).std()
+
+	def clamp(x, lower: float, upper: float):
+		if x < lower:
+			return lower
+		if x > upper:
+			return upper
+		return x
+	
+	for c in df[target_name].unique():
+		for f in df.columns.difference([target_name]):
+			lower = means.loc[c, f] - std_multiplier * stds.loc[c, f]
+			upper = means.loc[c, f] + std_multiplier * stds.loc[c, f]
+			df.loc[df[target_name] == c, f] = df.loc[df[target_name] == c, f].apply(lambda x: clamp(x, lower, upper))
+	
+	return df
 
 
 class LogisticRegression():
@@ -54,58 +68,34 @@ class LogisticRegression():
 			pred[range(self.m), self.target] -= 1
 			self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
 			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
-
-		# self.plot_sigmoid()
-		return
 		
-		fig, axes = plt.subplots(ncols=self.n_classes, nrows=self.n_features)
-		for c in range(self.n_classes):  # Loop over each class
-			for f in range(self.n_features):  # Loop over each feature
-				# Generate input values (x) for plotting, assume range of feature values
-				x_values = np.linspace(np.min(self.features.iloc[:, f]), np.max(self.features.iloc[:, f]), 100)
-				# Modify logits for each feature
-				logits_f = np.zeros((x_values.shape[0], self.n_classes))
-				logits_f[:, c] = x_values  # Simulate the effect of changing this feature
+	# def plot_sigmoid(self, df: pd.DataFrame, classes: dict):
+	# 	""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
+	# 	fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
 
-				# Apply softmax to get probabilities
-				y_values = self.softmax(logits_f)
-
-				# Plot for the class `c` (probabilities over feature values)
-				ax = axes[f, c]
-				ax.plot(x_values, y_values[:, c], label=f'Class {c}')
-				ax.set_title(f'Feature {f+1} vs Class {c}')
-				ax.set_xlabel(f'Feature {f+1}')
-				ax.set_ylabel('Probability')
-				ax.grid(True)
-		plt.show()
+	# 	for c in range(self.n_classes):  # Boucle sur chaque classe
+	# 		for f in range(self.n_features):  # Boucle sur chaque feature
+	# 			# Générer des valeurs pour la feature f
+	# 			x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
+				
+	# 			# Modifier les logits en fonction de la feature
+	# 			logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				
+	# 			# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
+	# 			logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
+				
+	# 			# Appliquer la fonction sigmoïde pour obtenir la probabilité
+	# 			y_values = self.sigmoid(logits_f[:, c])
+				
+	# 			# Tracer la probabilité en fonction de la feature
+	# 			ax = axes[f]
+	# 			ax.plot(x_values, y_values, label=f'{list(classes.keys())[list(classes.values()).index(c)]}')
+	# 			ax.set_xlabel(df.columns[f])
+	# 			ax.set_ylabel('Probabilité')
+	# 			ax.grid(True)
 		
-	def plot_sigmoid(self, df: pd.DataFrame, classes: dict):
-		""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
-		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
-
-		for c in range(self.n_classes):  # Boucle sur chaque classe
-			for f in range(self.n_features):  # Boucle sur chaque feature
-				# Générer des valeurs pour la feature f
-				x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
-				
-				# Modifier les logits en fonction de la feature
-				logits_f = np.zeros((x_values.shape[0], self.n_classes))
-				
-				# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
-				logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
-				
-				# Appliquer la fonction sigmoïde pour obtenir la probabilité
-				y_values = self.sigmoid(logits_f[:, c])
-				
-				# Tracer la probabilité en fonction de la feature
-				ax = axes[f]
-				ax.plot(x_values, y_values, label=f'{list(classes.keys())[list(classes.values()).index(c)]}')
-				ax.set_xlabel(df.columns[f])
-				ax.set_ylabel('Probabilité')
-				ax.grid(True)
-		
-		plt.tight_layout()
-		plt.show()
+	# 	plt.tight_layout()
+	# 	plt.show()
 
 	def stochastic_gd(self):
 		for i in range(self.m):
