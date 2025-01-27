@@ -2,6 +2,7 @@
 # import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
+import time
 
 
 def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
@@ -98,11 +99,9 @@ class LogisticRegression():
 		for _ in range(self.epochs):
 			logits = np.dot(self.features, self.W.T) + self.bias
 			pred = self.softmax(logits)
-			pred[range(self.m), self.target] -= 1
-			# self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
-			self.W -= (self.learning_rate / self.m) * (pred.T @ self.features)
+			np.add.at(pred, (np.arange(self.m), self.target), -1)
+			self.W -= self.learning_rate / self.m * np.dot(pred.T, self.features)
 			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
-
 
 	def stochastic_gd(self):
 		for i in range(self.m):
@@ -132,7 +131,8 @@ class LogisticRegression():
 				self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
 	def softmax(self, logits):
-		z = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+		# z = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+		z = np.exp(logits)
 		return z / np.sum(z, axis=1, keepdims=True)
 	
 	def predict(self, data: pd.DataFrame):

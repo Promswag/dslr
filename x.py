@@ -62,11 +62,11 @@ def main():
 	# print(lr.W)
 	# print(lr.bias)
 
-	# pred = lr.predict(data[features])
-	# print(classes)
-	# print(pd.DataFrame(pred, columns=['House']).value_counts().sort_index())
-	# correct = pd.DataFrame(pred == target)
-	# print(correct.value_counts())
+	pred = lr.predict(data[features])
+	print(classes)
+	print(pd.DataFrame(pred, columns=['House']).value_counts().sort_index())
+	correct = pd.DataFrame(pred == target)
+	print(correct.value_counts())
 
 	weights = pd.read_csv('weights.csv')
 	pred = lr.predict_from_weights(data[features], weights, classes, to_file=True)
