@@ -57,18 +57,15 @@ class LogisticRegression():
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
 			return None
+	
+	def reset(self):
+		self.costs = []
+		self.bias = np.zeros(self.n_classes)
+		self.W = np.zeros((self.n_classes, self.n_features))
 
 	def sigmoid(self, x):
 		return 1 / (1 + np.exp(-np.clip(x, -709, 709)))
 
-	def gradient_descent(self):
-		for _ in range(self.epochs):
-			logits = np.dot(self.features, self.W.T) + self.bias
-			pred = self.softmax(logits)
-			pred[range(self.m), self.target] -= 1
-			self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
-			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
-		
 	# def plot_sigmoid(self, df: pd.DataFrame, classes: dict):
 	# 	""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
 	# 	fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
@@ -97,6 +94,16 @@ class LogisticRegression():
 	# 	plt.tight_layout()
 	# 	plt.show()
 
+	def gradient_descent(self):
+		for _ in range(self.epochs):
+			logits = np.dot(self.features, self.W.T) + self.bias
+			pred = self.softmax(logits)
+			pred[range(self.m), self.target] -= 1
+			# self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
+			self.W -= (self.learning_rate / self.m) * (pred.T @ self.features)
+			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
+
+
 	def stochastic_gd(self):
 		for i in range(self.m):
 			logits = np.dot(self.features.iloc[[i]], self.W.T) + self.bias
@@ -106,7 +113,7 @@ class LogisticRegression():
 			self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
 	def mini_batch_gd(self):
-		loop = 10
+		loop = 20
 		batch_size = 50
 		offset = self.m % batch_size
 		batch_count = int(self.m / batch_size)
@@ -133,3 +140,31 @@ class LogisticRegression():
 		probabilies = self.softmax(logits)
 		predictions = np.argmax(probabilies, axis=1)
 		return predictions
+	
+	def predict_from_weights(self, data: pd.DataFrame, weights: pd.DataFrame, classes: dict[str:int], to_file: bool = False) -> np.ndarray:
+		bias = weights['Bias'].values
+		W = weights.iloc[:, 2:].values
+
+		logits = np.dot(data, W.T) + bias
+		probabilies = self.softmax(logits)
+		predictions = np.argmax(probabilies, axis=1)
+
+		classes = {v: k for k, v in classes.items()}
+
+		if to_file is True:
+			formatted_predictions = pd.DataFrame(predictions, columns=[self.target.name])
+			formatted_predictions[self.target.name] = formatted_predictions[self.target.name].map(classes)
+			formatted_predictions.to_csv('houses.csv', index=True, index_label='Index')
+
+		return predictions
+	
+	def save_to_file(self):
+		try:
+			weights = pd.DataFrame()
+			weights['Class'] = pd.Series(self.target.unique())
+			weights['Bias'] = pd.Series(self.bias)
+			for i, f in enumerate(self.features):
+				weights[f] = pd.Series(self.W[:, i])
+			weights.to_csv('weights.csv', index=False)
+		except Exception as e:
+			print(f'{type(e).__name__}: {e}')
