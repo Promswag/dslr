@@ -33,7 +33,11 @@ def main():
 	# ]
 	scaler = StandardScaler()
 	data = scaler.fit_transform(df[features])
+	scaler.save_to_file()
 	scaled_test_df = scaler.transform(test_df[features])
+	# scaler2 = StandardScaler()
+	# scaled_test_df = scaler2.fit_transform(test_df[features])
+	print(scaled_test_df)
 	# print(test_df[features])
 	# print(scaled_test_df)
 
@@ -42,6 +46,7 @@ def main():
 	lr.gradient_descent()
 	then = time.time_ns()
 	print(f'{(then - now)/1e9:.2f}')
+	# print(lr.bias)
 	# lr.reset()
 
 	# now = time.time_ns()
@@ -74,6 +79,10 @@ def main():
 	# print(pd.DataFrame(pred, columns=['House']).value_counts().sort_index())
 	correct = pd.DataFrame(pred == target)
 	print(correct.value_counts())
+
+	pred = lr.predict_from_weights(scaled_test_df[features], weights, classes)
+	print(pd.DataFrame(pred).value_counts().sort_index())
+
 	# print(pred)
 
 

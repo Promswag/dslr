@@ -21,5 +21,15 @@ class StandardScaler():
 	def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
 		self.fit(df)
 		return self.transform(df)
+	
+	def save_to_file(self):
+		try:
+			scaler = pd.DataFrame()
+			scaler['Features'] = pd.Series(self.features)
+			scaler['Mean'] = pd.Series([v for k, v in self.mean.items()])
+			scaler['Std'] = pd.Series([v for k, v in self.std.items()])
+			scaler.to_csv('scaler.csv', index=False)
+		except Exception as e:
+			print(f'{type(e).__name__}: {e}')
 
 

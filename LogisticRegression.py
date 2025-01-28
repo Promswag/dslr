@@ -2,7 +2,6 @@
 # import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
-import time
 
 
 def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
