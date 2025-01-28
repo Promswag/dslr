@@ -9,7 +9,7 @@ def standardize(lst):
 
 def main():
 	# try:
-		data = pd.read_csv("dataset_train.csv")
+		data = pd.read_csv("datasets/dataset_train.csv")
 		data.dropna(inplace=True)
 		features = [
 			'Arithmancy',

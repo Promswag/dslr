@@ -18,7 +18,7 @@ def pct(list, p):
 
 def main():
     try:
-        data = pd.read_csv("dataset_train.csv")
+        data = pd.read_csv("datasets/dataset_train.csv")
         data = data.select_dtypes(include=[np.number])
 
         count = {str: int}

@@ -37,7 +37,7 @@ class LogisticRegression():
             self.target = target
             self.learning_rate = learning_rate
             self.epochs = epochs
-            self.costs = []
+            self.losses = []
             self.bias = np.random.random(self.n_classes)
             self.W = np.random.random((self.n_classes, self.n_features))
         except Exception as e:
@@ -48,15 +48,17 @@ class LogisticRegression():
         for _ in range(self.epochs):
             logits = np.dot(self.features, self.W.T) + self.bias
             pred = self.softmax(logits)
-            self.costs = 
+            loss_pred = pred.copy()
             pred[range(self.m), self.target] -= 1
             self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
             self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
+            self.losses.append(self.compute_loss(loss_pred))
 
-    def compute_loss(self, y_true, y_pred):
-        y_zero_loss = y_true * np.log(y_pred + 1e-9)
-        y_one_loss = (1 - y_true) * np.log(1 - y_pred + 1e-9)
-        return -np.mean(y_zero_loss + y_one_loss)
+    def compute_loss(self, pred):
+        epsilon = 1e-15
+        pred = np.clip(pred, epsilon, 1 - epsilon)
+        loss = -np.mean(np.log(pred[np.arange(self.m), self.target]))
+        return loss
 
     def stochastic_gd(self):
         for i in range(self.m):
@@ -72,7 +74,7 @@ class LogisticRegression():
     def softmax(self, logits):
         z = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return z / np.sum(z, axis=1, keepdims=True)
-        
+
     def predict(self, data: pd.DataFrame):
         logits = np.dot(data, self.W.T) + self.bias
         probabilies = self.softmax(logits)

@@ -5,7 +5,7 @@ from LogisticRegression import LogisticRegression
 
 
 def main():
-	df = pd.read_csv("dataset_train.csv")
+	df = pd.read_csv("datasets/dataset_train.csv")
 	df = preprocessing(df, "Hogwarts House", keep_na=True)
 	features = df.iloc[:-1, 2:-1]
 	data = pd.DataFrame()

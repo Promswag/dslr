@@ -6,7 +6,7 @@ import matplotlib.patches as mpatches
 
 def main():
 	try:
-		data = pd.read_csv("dataset_train.csv")
+		data = pd.read_csv("datasets/dataset_train.csv")
 		features = [
 			'Arithmancy',
 			'Astronomy',
