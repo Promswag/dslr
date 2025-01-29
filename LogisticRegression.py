@@ -4,20 +4,29 @@ import numpy as np
 import pandas as pd
 
 
-def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
-	data = df.select_dtypes(include='number')
-	classes = {c: i for i, c in enumerate(df[target_name].unique())}
-	data[target_name] = df[target_name].map(classes)
+def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
+	numeric_features = df.select_dtypes(include='number').columns
+	means = df.groupby(target_name)[numeric_features].mean()
 
-	if keep_na is False:
-		data.dropna(inplace=True)
-	else:
-		means = data.groupby(target_name).mean()
-		data = data.apply(lambda x: x.fillna(means.loc[x[target_name]]), axis=1)
-		data[target_name] = data[target_name].astype(int)
+	for c in df[target_name].unique():
+		for f in numeric_features:
+			df.loc[df[target_name] == c, f] = df.loc[df[target_name] == c, f].fillna(means.loc[c, f])
 
-	return data, classes
+	return df
 
+# def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
+# 	data = df.select_dtypes(include='number')
+# 	classes = {c: i for i, c in enumerate(df[target_name].unique())}
+# 	data[target_name] = df[target_name].map(classes)
+
+# 	if keep_na is False:
+# 		data.dropna(inplace=True)
+# 	else:
+# 		means = data.groupby(target_name).mean()
+# 		data = data.apply(lambda x: x.fillna(means.loc[x[target_name]]), axis=1)
+# 		data[target_name] = data[target_name].astype(int)
+
+# 	return data, classes
 
 def outliers_clamping_by_std(df: pd.DataFrame, target_name: str, std_multiplier: float) -> pd.DataFrame:
 	means = df.groupby(target_name).mean()
@@ -47,8 +56,9 @@ class LogisticRegression():
 					"LogisticRegression: Features and Target must be of the same shape.")
 			self.m, self.n_features = features.shape
 			self.n_classes = len(target.unique())
+			self.classes = {i: c for i, c in enumerate(target.unique())}
+			self.target = target.map({v: k for k, v in self.classes.items()})
 			self.features = features
-			self.target = target
 			self.learning_rate = learning_rate
 			self.epochs = epochs
 			self.costs = []
@@ -102,7 +112,7 @@ class LogisticRegression():
 			self.W -= self.learning_rate / self.m * np.dot(pred.T, self.features)
 			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
 
-	def stochastic_gd(self):
+	def stochastic(self):
 		for i in range(self.m):
 			logits = np.dot(self.features.iloc[[i]], self.W.T) + self.bias
 			pred = self.softmax(logits)
@@ -110,7 +120,7 @@ class LogisticRegression():
 			self.W -= self.learning_rate * np.dot(pred.T, self.features.iloc[[i]])
 			self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
-	def mini_batch_gd(self):
+	def mini_batch(self):
 		loop = 20
 		batch_size = 50
 		offset = self.m % batch_size
@@ -134,36 +144,36 @@ class LogisticRegression():
 		z = np.exp(logits)
 		return z / np.sum(z, axis=1, keepdims=True)
 	
-	def predict(self, data: pd.DataFrame):
+	def predict(self, data: pd.DataFrame, to_file: bool = False) -> pd.Series:
 		logits = np.dot(data, self.W.T) + self.bias
 		probabilies = self.softmax(logits)
 		predictions = np.argmax(probabilies, axis=1)
-		return predictions
-	
-	def predict_from_weights(self, data: pd.DataFrame, weights: pd.DataFrame, classes: dict[str:int], to_file: bool = False) -> np.ndarray:
-		bias = weights['Bias'].values
-		W = weights.iloc[:, 2:].values
-
-		logits = np.dot(data, W.T) + bias
-		probabilies = self.softmax(logits)
-		predictions = np.argmax(probabilies, axis=1)
-
-		classes = {v: k for k, v in classes.items()}
+		formatted = pd.Series(predictions, index=self.target.index, name=self.target.name).map(self.classes)
 
 		if to_file is True:
-			formatted_predictions = pd.DataFrame(predictions, columns=[self.target.name])
-			formatted_predictions[self.target.name] = formatted_predictions[self.target.name].map(classes)
-			formatted_predictions.to_csv('houses.csv', index=True, index_label='Index')
+			formatted.to_csv('houses.csv', index=True, index_label='Index')
 
-		return predictions
+		return formatted
 	
-	def save_to_file(self):
+	def predict_from_weights(self, data: pd.DataFrame, path: str = 'weights.csv', to_file: bool = False) -> pd.Series:
+		self.load_weights(path)
+		return self.predict(data, to_file)
+	
+	def load_weights(self, path: str = 'weights.csv'):
+		try:
+			weights = pd.read_csv(path)
+			self.bias = weights['Bias'].values
+			self.W = weights.iloc[:, 2:].values
+		except Exception as e:
+			print(f"{type(e).__name__} : {e}")
+	
+	def save_weights(self, path: str = 'weights.csv'):
 		try:
 			weights = pd.DataFrame()
 			weights['Class'] = pd.Series(self.target.unique())
 			weights['Bias'] = pd.Series(self.bias)
 			for i, f in enumerate(self.features):
 				weights[f] = pd.Series(self.W[:, i])
-			weights.to_csv('weights.csv', index=False)
+			weights.to_csv(path, index=False)
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
