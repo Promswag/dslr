@@ -48,7 +48,7 @@ def main():
 	# print(scaler.std)
 	# return
 	# scaler.save_to_file()
-	# scaled_test_df = scaler.transform(test_df[features])
+	scaled_test_df = scaler.transform(test_df[features])
 	# scaler2 = StandardScaler()
 	# scaled_test_df = scaler2.fit_transform(test_df[features])
 	# print(scaled_test_df)
@@ -60,7 +60,7 @@ def main():
 	lr.gradient_descent()
 	# then = time.time_ns()
 	# print(f'{(then - now)/1e9:.2f}')
-	# lr.plot_sigmoid(scaled_test_df[features], classes)
+	lr.plot_sigmoid(scaled_test_df[features])
 	# print(lr.bias)
 	# lr.reset()
 

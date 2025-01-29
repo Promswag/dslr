@@ -1,4 +1,4 @@
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
@@ -76,33 +76,33 @@ class LogisticRegression():
 	def sigmoid(self, x):
 		return 1 / (1 + np.exp(-np.clip(x, -709, 709)))
 
-	# def plot_sigmoid(self, df: pd.DataFrame, classes: dict):
-	# 	""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
-	# 	fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
+	def plot_sigmoid(self, df: pd.DataFrame):
+		""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
+		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
 
-	# 	for c in range(self.n_classes):  # Boucle sur chaque classe
-	# 		for f in range(self.n_features):  # Boucle sur chaque feature
-	# 			# Générer des valeurs pour la feature f
-	# 			x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
+		for c in range(self.n_classes):  # Boucle sur chaque classe
+			for f in range(self.n_features):  # Boucle sur chaque feature
+				# Générer des valeurs pour la feature f
+				x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
 				
-	# 			# Modifier les logits en fonction de la feature
-	# 			logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				# Modifier les logits en fonction de la feature
+				logits_f = np.zeros((x_values.shape[0], self.n_classes))
 				
-	# 			# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
-	# 			logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
+				# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
+				logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
 				
-	# 			# Appliquer la fonction sigmoïde pour obtenir la probabilité
-	# 			y_values = self.sigmoid(logits_f[:, c])
+				# Appliquer la fonction sigmoïde pour obtenir la probabilité
+				y_values = self.sigmoid(logits_f[:, c])
 				
-	# 			# Tracer la probabilité en fonction de la feature
-	# 			ax = axes[f]
-	# 			ax.plot(x_values, y_values, label=f'{list(classes.keys())[list(classes.values()).index(c)]}')
-	# 			ax.set_xlabel(df.columns[f])
-	# 			ax.set_ylabel('Probabilité')
-	# 			ax.grid(True)
+				# Tracer la probabilité en fonction de la feature
+				ax = axes[f]
+				ax.plot(x_values, y_values, label=f'{self.classes[c]}')
+				ax.set_xlabel(df.columns[f])
+				ax.set_ylabel('Probabilité')
+				ax.grid(True)
 		
-	# 	plt.tight_layout()
-	# 	plt.show()
+		plt.tight_layout()
+		plt.show()
 
 	def gradient_descent(self):
 		for _ in range(self.epochs):
