@@ -9,7 +9,7 @@ class StandardScaler():
 			self.mean = {}
 			self.std = {}
 
-	def from_file(self, path: str):
+	def from_file(self, path: str = 'scaler.csv'):
 		try:
 			df = pd.read_csv(path)
 			self.features = df['Features'].values
@@ -21,7 +21,7 @@ class StandardScaler():
 	def fit(self, df: pd.DataFrame):
 		self.features = df.select_dtypes(include='number').columns.values
 		for f in self.features:
-			lst = df[f]
+			lst = df[f].dropna()
 			self.mean[f] = sum(lst) / len(lst)
 			self.std[f] = (sum(abs(lst - self.mean[f]) ** 2) / (len(lst) - 1)) ** 0.5
 
@@ -36,13 +36,13 @@ class StandardScaler():
 		self.fit(df)
 		return self.transform(df)
 	
-	def save_to_file(self):
+	def save_to_file(self, path: str = 'scaler.csv'):
 		try:
 			scaler = pd.DataFrame()
 			scaler['Features'] = pd.Series(self.features)
 			scaler['Mean'] = pd.Series([v for k, v in self.mean.items()])
 			scaler['Std'] = pd.Series([v for k, v in self.std.items()])
-			scaler.to_csv('scaler.csv', index=False)
+			scaler.to_csv(path, index=False)
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
 
