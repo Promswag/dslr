@@ -1,4 +1,5 @@
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 # import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
@@ -53,6 +54,55 @@ class LogisticRegression():
             self.W -= self.learning_rate * (np.dot(pred.T, self.features) / self.m)
             self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
             self.losses.append(self.compute_loss(loss_pred))
+
+        plt.plot(range(len(self.losses)), self.losses, label="Loss Curve")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss (Cross-Entropy)")
+        plt.title("Error Curve During Training")
+        plt.legend()
+        plt.savefig('1')
+
+        sample_input = self.features.iloc[0:-1]  # Take the first sample
+        probabilities = self.softmax(np.dot(sample_input, self.W.T) + self.bias)
+        plt.bar(range(len(probabilities[0])), probabilities[0])
+        plt.xlabel("Class")
+        plt.ylabel("Probability")
+        plt.title("Class Probability Distribution for a Sample Input")
+        plt.savefig('2')
+
+        # x_min, x_max = self.features.iloc[:, 0].min() - 1, self.features.iloc[:, 0].max() + 1
+        # y_min, y_max = self.features.iloc[:, 1].min() - 1, self.features.iloc[:, 1].max() + 1
+        # xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100),
+        #                     np.linspace(y_min, y_max, 100))
+        # Z = self.predict(pd.DataFrame(np.c_[xx.ravel(), yy.ravel()]))
+        # Z = Z.reshape(xx.shape)
+        # plt.contourf(xx, yy, Z, alpha=0.3)
+        # plt.scatter(self.features.iloc[:, 0], self.features.iloc[:, 1], c=self.target, edgecolor='k')
+        # plt.xlabel("Feature 1")
+        # plt.ylabel("Feature 2")
+        # plt.title("Decision Boundary")
+        # plt.savefig('3')
+
+        y_true = self.target
+        y_pred = self.predict(self.features)
+        cm = confusion_matrix(y_true, y_pred)
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+        disp.plot(cmap=plt.cm.Blues)
+        plt.title("Confusion Matrix")
+        plt.savefig('4')
+
+    x = np.linspace(-10, 10, 100)
+    logits = np.array([x, -x, x/2, -x/2]).T
+    softmax_values = np.exp(logits) / np.sum(np.exp(logits), axis=1, keepdims=True)
+    plt.plot(x, softmax_values[:, 0], label="Class 1")
+    plt.plot(x, softmax_values[:, 1], label="Class 2")
+    plt.plot(x, softmax_values[:, 2], label="Class 3")
+    plt.plot(x, softmax_values[:, 3], label="Class 4")
+    plt.xlabel("Feature Value")
+    plt.ylabel("Probability")
+    plt.title("Softmax Output for 4 Classes")
+    plt.legend()
+    plt.savefig('5')
 
     def compute_loss(self, pred):
         epsilon = 1e-15

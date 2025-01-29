@@ -28,18 +28,6 @@ def main():
 	print('\n')
 	print(correct.value_counts())
 
-	# l = LogisticRegression(data, target)
-	# l.stochastic_gd()
-	# print("weight:\n", l.W)
-	# print(l.bias)
-
-	# pred = l.predict(data)
-	# print('\n')
-	# print(pd.DataFrame(pred).value_counts())
-	# correct = pd.DataFrame(pred == target)
-	# print('\n')
-	# print(correct.value_counts())
-
 
 if __name__ == "__main__":
 	main()
