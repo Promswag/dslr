@@ -3,17 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-
-def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
-	numeric_features = df.select_dtypes(include='number').columns
-	means = df.groupby(target_name)[numeric_features].mean()
-
-	for c in df[target_name].unique():
-		for f in numeric_features:
-			df.loc[df[target_name] == c, f] = df.loc[df[target_name] == c, f].fillna(means.loc[c, f])
-
-	return df
-
 # def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
 # 	data = df.select_dtypes(include='number')
 # 	classes = {c: i for i, c in enumerate(df[target_name].unique())}
@@ -28,9 +17,20 @@ def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
 
 # 	return data, classes
 
+def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
+	numeric_features = df.select_dtypes(include='number').columns
+	means = df.groupby(target_name)[numeric_features].mean()
+
+	for c in df[target_name].unique():
+		for f in numeric_features:
+			df.loc[df[target_name] == c, f] = df.loc[df[target_name] == c, f].fillna(means.loc[c, f])
+
+	return df
+
 def outliers_clamping_by_std(df: pd.DataFrame, target_name: str, std_multiplier: float) -> pd.DataFrame:
-	means = df.groupby(target_name).mean()
-	stds = df.groupby(target_name).std()
+	numeric_features = df.select_dtypes(include='number').columns
+	means = df.groupby(target_name)[numeric_features].mean()
+	stds = df.groupby(target_name)[numeric_features].std()
 
 	def clamp(x, lower: float, upper: float):
 		if x < lower:
@@ -40,7 +40,7 @@ def outliers_clamping_by_std(df: pd.DataFrame, target_name: str, std_multiplier:
 		return x
 	
 	for c in df[target_name].unique():
-		for f in df.columns.difference([target_name]):
+		for f in numeric_features:
 			lower = means.loc[c, f] - std_multiplier * stds.loc[c, f]
 			upper = means.loc[c, f] + std_multiplier * stds.loc[c, f]
 			df.loc[df[target_name] == c, f] = df.loc[df[target_name] == c, f].apply(lambda x: clamp(x, lower, upper))
@@ -144,19 +144,19 @@ class LogisticRegression():
 		z = np.exp(logits)
 		return z / np.sum(z, axis=1, keepdims=True)
 	
-	def predict(self, data: pd.DataFrame, to_file: bool = False) -> pd.Series:
+	def predict(self, data: pd.DataFrame, to_file: str = 'predictions.csv') -> pd.Series:
 		logits = np.dot(data, self.W.T) + self.bias
 		probabilies = self.softmax(logits)
 		predictions = np.argmax(probabilies, axis=1)
-		formatted = pd.Series(predictions, index=self.target.index, name=self.target.name).map(self.classes)
+		formatted = pd.Series(predictions, index=data.index, name=self.target.name).map(self.classes)
 
-		if to_file is True:
-			formatted.to_csv('houses.csv', index=True, index_label='Index')
+		if isinstance(to_file, str) is True:
+			formatted.to_csv(to_file, index=True, index_label='Index')
 
 		return formatted
 	
-	def predict_from_weights(self, data: pd.DataFrame, path: str = 'weights.csv', to_file: bool = False) -> pd.Series:
-		self.load_weights(path)
+	def predict_from_weights(self, data: pd.DataFrame, weights_path: str = 'weights.csv', to_file: str = 'predictions.csv') -> pd.Series:
+		self.load_weights(weights_path)
 		return self.predict(data, to_file)
 	
 	def load_weights(self, path: str = 'weights.csv'):

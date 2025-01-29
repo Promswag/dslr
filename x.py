@@ -11,12 +11,15 @@ def main():
 	# df.dropna(inplace=True)
 	test_df = pd.read_csv("dataset_test.csv")
 	df = fill_na(df, "Hogwarts House")
-	target = df["Hogwarts House"]
 	features = [
 		'Defense Against the Dark Arts',
 		'Ancient Runes',
 		'Charms',
 	]
+
+	VALIDATION = df.sample(frac=0.33)
+	df.drop(VALIDATION.index, inplace=True)
+	target = df["Hogwarts House"]
 
 	# kekeke = {c: i for i, c in enumerate(target.unique())}
 	# print(kekeke)
@@ -48,7 +51,7 @@ def main():
 	# print(scaler.std)
 	# return
 	# scaler.save_to_file()
-	scaled_test_df = scaler.transform(test_df[features])
+	# scaled_test_df = scaler.transform(test_df[features])
 	# scaler2 = StandardScaler()
 	# scaled_test_df = scaler2.fit_transform(test_df[features])
 	# print(scaled_test_df)
@@ -56,11 +59,11 @@ def main():
 	# print(scaled_test_df)
 
 	lr = LogisticRegression(data, target)
-	# now = time.time_ns()
 	lr.gradient_descent()
+	# now = time.time_ns()
 	# then = time.time_ns()
 	# print(f'{(then - now)/1e9:.2f}')
-	lr.plot_sigmoid(scaled_test_df[features])
+	# lr.plot_sigmoid(scaled_test_df[features])
 	# print(lr.bias)
 	# lr.reset()
 
