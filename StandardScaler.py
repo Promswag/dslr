@@ -1,19 +1,33 @@
 import pandas as pd
 
 class StandardScaler():
-	def __init__(self):
-		self.features = []
-		self.mean = {}
-		self.std = {}
+	def __init__(self, path: str=None):
+		if path is not None:
+			self.from_file(path)
+		else:
+			self.features = []
+			self.mean = {}
+			self.std = {}
+
+	def from_file(self, path: str):
+		try:
+			df = pd.read_csv(path)
+			self.features = df['Features'].values
+			self.mean = {f: df['Mean'][i] for i, f in enumerate(self.features)}
+			self.std = {f: df['Std'][i] for i, f in enumerate(self.features)}
+		except Exception as e:
+			print(f"{type(e).__name__} : {e}")
 
 	def fit(self, df: pd.DataFrame):
-		self.features = df.select_dtypes(include='number').columns
+		self.features = df.select_dtypes(include='number').columns.values
 		for f in self.features:
 			lst = df[f]
 			self.mean[f] = sum(lst) / len(lst)
 			self.std[f] = (sum(abs(lst - self.mean[f]) ** 2) / (len(lst) - 1)) ** 0.5
 
 	def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+		if len(self.features) == 0:
+			return df
 		for f in self.features:
 			df.loc[:,f] = (df.loc[:,f] - self.mean[f]) / self.std[f]
 		return df
