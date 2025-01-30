@@ -23,7 +23,7 @@ def main():
 		if len (sys.argv) > 2:
 
 			skip = False
-			model = None
+			model = 'batch'
 			for i in range(1, len(sys.argv) - 1):
 				if skip is True:
 					skip = False
@@ -45,7 +45,7 @@ def main():
 					skip = True
 
 		if help is True:
-			print(f"Types for the gradient descent: {' '.join(MODEL)}")
+			print(f"Models for the gradient descent: {' '.join(MODEL)}")
 				
 		features = [
 			'Defense Against the Dark Arts',
@@ -59,6 +59,7 @@ def main():
 		df = fill_na(df, target)
 		scaler = StandardScaler()
 		df[features] = scaler.fit_transform(df[features])
+		scaler.save_to_file()
 
 		lr = LogisticRegression(df[features], df[target])
 		MODEL[model](lr)

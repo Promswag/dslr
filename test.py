@@ -16,25 +16,11 @@ def main():
 		'Ancient Runes',
 		'Charms',
 	]
-	# features = [
-	# 	'Arithmancy',
-	# 	'Astronomy',
-	# 	'Herbology',
-	# 	'Defense Against the Dark Arts',
-	# 	'Divination',
-	# 	'Muggle Studies',
-	# 	'Ancient Runes',
-	# 	'History of Magic',
-	# 	'Transfiguration',
-	# 	'Potions',
-	# 	'Care of Magical Creatures',
-	# 	'Charms',
-	# 	'Flying',
-	# ]
 	target = 'Hogwarts House'
 
 	VALIDATION = df.sample(frac=0.25)
-	# VALIDATION = outliers_clamping_by_std(VALIDATION, target, 2)
+	VALIDATION.to_csv('validation.csv')
+
 	df.drop(VALIDATION.index, inplace=True)
 	df = outliers_clamping_by_std(df, target, 2)
 
@@ -45,28 +31,27 @@ def main():
 	lr = LogisticRegression(df[features], df[target])
 	lr.gradient_descent()
 	lr.save_weights()
-
-	pred = lr.predict_from_weights(VALIDATION[features])
+	weights = pd.read_csv('weights.csv')
+	pred = LogisticRegression.predict_from_weights(VALIDATION[features], weights)
 	correct = (pred == VALIDATION[target]).value_counts()
-	print(correct)
 	print(correct.iloc[0] / len(pred))
 
 	lr.reset()
 	lr.stochastic()
 	lr.save_weights()
-
-	pred = lr.predict_from_weights(VALIDATION[features])
+	weights = pd.read_csv('weights.csv')
+	pred = LogisticRegression.predict_from_weights(VALIDATION[features], weights)
 	correct = (pred == VALIDATION[target]).value_counts()
-	print(correct)
 	print(correct.iloc[0] / len(pred))
 
 	lr.reset()
 	lr.mini_batch()
 	lr.save_weights()
-
-	pred = lr.predict_from_weights(VALIDATION[features])
+	weights = pd.read_csv('weights.csv')
+	pred = LogisticRegression.predict_from_weights(VALIDATION[features], weights)
 	correct = (pred == VALIDATION[target]).value_counts()
-	print(correct)
+
+			
 	print(correct.iloc[0] / len(pred))
 
 if __name__ == "__main__":

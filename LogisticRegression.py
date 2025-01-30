@@ -3,19 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# def preprocessing(df: pd.DataFrame, target_name: str, keep_na: bool=False) -> pd.DataFrame:
-# 	data = df.select_dtypes(include='number')
-# 	classes = {c: i for i, c in enumerate(df[target_name].unique())}
-# 	data[target_name] = df[target_name].map(classes)
-
-# 	if keep_na is False:
-# 		data.dropna(inplace=True)
-# 	else:
-# 		means = data.groupby(target_name).mean()
-# 		data = data.apply(lambda x: x.fillna(means.loc[x[target_name]]), axis=1)
-# 		data[target_name] = data[target_name].astype(int)
-
-# 	return data, classes
 
 def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
 	numeric_features = df.select_dtypes(include='number').columns
@@ -46,6 +33,10 @@ def outliers_clamping_by_std(df: pd.DataFrame, target_name: str, std_multiplier:
 			df.loc[df[target_name] == c, f] = df.loc[df[target_name] == c, f].apply(lambda x: clamp(x, lower, upper))
 	
 	return df
+
+def softmax(logits):
+	z = np.exp(logits)
+	return z / np.sum(z, axis=1, keepdims=True)
 
 
 class LogisticRegression():
@@ -107,7 +98,7 @@ class LogisticRegression():
 	def gradient_descent(self):
 		for _ in range(self.epochs):
 			logits = np.dot(self.features, self.W.T) + self.bias
-			pred = self.softmax(logits)
+			pred = softmax(logits)
 			np.add.at(pred, (np.arange(self.m), self.target), -1)
 			self.W -= self.learning_rate / self.m * np.dot(pred.T, self.features)
 			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
@@ -115,7 +106,7 @@ class LogisticRegression():
 	def stochastic(self):
 		for i in range(self.m):
 			logits = np.dot(self.features.iloc[[i]], self.W.T) + self.bias
-			pred = self.softmax(logits)
+			pred = softmax(logits)
 			pred[[0], self.target.iloc[[i]]] -= 1
 			self.W -= self.learning_rate * np.dot(pred.T, self.features.iloc[[i]])
 			self.bias -= self.learning_rate * np.sum(pred, axis=0)
@@ -134,19 +125,15 @@ class LogisticRegression():
 				batch_target = shuffled_target.iloc[i * batch_size: (i + 1) * batch_size + (offset if i == batch_count - 1 else 0)]
 
 				logits = np.dot(batch_features, self.W.T) + self.bias
-				pred = self.softmax(logits)
+				pred = softmax(logits)
 				pred[range(batch_size + (offset if i == batch_count - 1 else 0)), batch_target] -= 1
 				self.W -= self.learning_rate * np.dot(pred.T, batch_features)
 				self.bias -= self.learning_rate * np.sum(pred, axis=0)
 
-	def softmax(self, logits):
-		# z = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-		z = np.exp(logits)
-		return z / np.sum(z, axis=1, keepdims=True)
 	
 	def predict(self, data: pd.DataFrame, to_file: str = 'predictions.csv') -> pd.Series:
 		logits = np.dot(data, self.W.T) + self.bias
-		probabilies = self.softmax(logits)
+		probabilies = softmax(logits)
 		predictions = np.argmax(probabilies, axis=1)
 		formatted = pd.Series(predictions, index=data.index, name=self.target.name).map(self.classes)
 
@@ -155,25 +142,41 @@ class LogisticRegression():
 
 		return formatted
 	
-	def predict_from_weights(self, data: pd.DataFrame, weights_path: str = 'weights.csv', to_file: str = 'predictions.csv') -> pd.Series:
-		self.load_weights(weights_path)
-		return self.predict(data, to_file)
-	
-	def load_weights(self, path: str = 'weights.csv'):
+	def load_weights(self):
 		try:
-			weights = pd.read_csv(path)
+			weights = pd.read_csv('weights.csv')
 			self.bias = weights['Bias'].values
 			self.W = weights.iloc[:, 2:].values
 		except Exception as e:
 			print(f"{type(e).__name__} : {e}")
 	
-	def save_weights(self, path: str = 'weights.csv'):
+	def save_weights(self):
 		try:
 			weights = pd.DataFrame()
-			weights['Class'] = pd.Series(self.target.unique())
+			weights[self.target.name] = pd.Series(self.classes.values())
 			weights['Bias'] = pd.Series(self.bias)
 			for i, f in enumerate(self.features):
 				weights[f] = pd.Series(self.W[:, i])
-			weights.to_csv(path, index=False)
+			weights.to_csv('weights.csv', index=False)
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
+
+	@staticmethod
+	def predict_from_weights(data: pd.DataFrame, weights: pd.DataFrame, to_file: str = 'predictions.csv') -> pd.Series:
+		try:
+			classes = {i: c for i, c in enumerate(weights.iloc[:, 0].values)}
+			bias = weights.iloc[:, 1].values
+			W = weights.iloc[:, 2:].values
+
+			logits = np.dot(data, W.T) + bias
+			prob = softmax(logits)
+			pred = np.argmax(prob, axis=1)
+			formatted = pd.Series(pred, index=data.index, name=weights.columns[0]).map(classes)
+
+			if isinstance(to_file, str):
+				formatted.to_csv(to_file, index=True, index_label='Index')
+
+			return formatted
+
+		except Exception as e:
+			print(f"{type(e).__name__} : {e}")

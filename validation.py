@@ -11,16 +11,24 @@ def main():
 		for file in sys.argv[1:]:
 			if file[-4:] != ".csv":
 				raise Exception(f"Wrong file format for {file}, expected: .csv")
-		
-		weights = pd.read_csv('weights.csv')
-		features = [f for f in weights.columns[2:]]
+				
+		features = [
+			'Defense Against the Dark Arts',
+			'Ancient Runes',
+			'Charms',
+		]
+		target = 'Hogwarts House'
 
-		df = pd.read_csv(sys.argv[-1], index_col='Index')[features]
-
+		df = pd.read_csv(sys.argv[-1], index_col='Index')[features + [target]]
+		print(df)
 		scaler = StandardScaler().from_file()
 		df[features] = scaler.transform(df[features])
-		
-		pred = LogisticRegression.predict_from_weights(df[features], weights, to_file='houses.csv')
+		pred = LogisticRegression.predictXD(df[features])
+
+		correct = (pred == df[target]).value_counts()
+		print(correct)
+		print(correct.iloc[0] / len(pred))
+
 		
 	except Exception as e:
 		print(f'{type(e).__name__} : {e}')
