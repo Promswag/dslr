@@ -1,15 +1,12 @@
 import pandas as pd
 
 class StandardScaler():
-	def __init__(self, path: str=None):
-		if path is not None:
-			self.from_file(path)
-		else:
-			self.features = []
-			self.mean = {}
-			self.std = {}
+	def __init__(self):
+		self.features = []
+		self.mean = {}
+		self.std = {}
 
-	def from_file(self, path: str = 'scaler.csv'):
+	def from_file(self, path: str = 'scaler.csv') -> "StandardScaler":
 		try:
 			df = pd.read_csv(path)
 			self.features = df['Features'].values
@@ -17,6 +14,7 @@ class StandardScaler():
 			self.std = {f: df['Std'][i] for i, f in enumerate(self.features)}
 		except Exception as e:
 			print(f"{type(e).__name__} : {e}")
+		return self
 
 	def fit(self, df: pd.DataFrame):
 		self.features = df.select_dtypes(include='number').columns.values
