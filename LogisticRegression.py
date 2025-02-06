@@ -1,8 +1,9 @@
-import matplotlib.pyplot as plt
-# import matplotlib.animation as animation
 import numpy as np
 import pandas as pd
-
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+# Adding plot_adam_path method to LogisticRegression class
+from mpl_toolkits.mplot3d import Axes3D
 
 def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
 	numeric_features = df.select_dtypes(include='number').columns
@@ -38,7 +39,6 @@ def softmax(logits):
 	z = np.exp(logits)
 	return z / np.sum(z, axis=1, keepdims=True)
 
-
 class LogisticRegression():
 	def __init__(self, features: pd.DataFrame, target: pd.Series, learning_rate: float = 0.01, epochs: int = 1000):
 		try:
@@ -52,86 +52,160 @@ class LogisticRegression():
 			self.features = features
 			self.learning_rate = learning_rate
 			self.epochs = epochs
-			self.costs = []
+			self.losses = []
+			self.bias_history = []
+			self.weight_history = []
 			self.bias = np.zeros(self.n_classes)
 			self.W = np.zeros((self.n_classes, self.n_features))
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
 			return None
-	
+			  
 	def reset(self):
-		self.costs = []
+		self.losses.clear()
+		self.bias_history.clear()
+		self.weight_history.clear()
 		self.bias = np.zeros(self.n_classes)
 		self.W = np.zeros((self.n_classes, self.n_features))
 
 	def sigmoid(self, x):
 		return 1 / (1 + np.exp(-np.clip(x, -709, 709)))
 
-	def plot_sigmoid(self, df: pd.DataFrame):
-		""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
-		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
+	def compute_loss(self, pred):
+		epsilon = 1e-15
+		pred = np.clip(pred, epsilon, 1 - epsilon)
+		return -np.mean(np.log(pred[np.arange(self.m), self.target]))
+	
+	def compute_loss_adam(self, pred, y_batch):
+		epsilon = 1e-15
+		pred = np.clip(pred, epsilon, 1 - epsilon)
 
-		for c in range(self.n_classes):  # Boucle sur chaque classe
-			for f in range(self.n_features):  # Boucle sur chaque feature
-				# Générer des valeurs pour la feature f
-				x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
-				
-				# Modifier les logits en fonction de la feature
-				logits_f = np.zeros((x_values.shape[0], self.n_classes))
-				
-				# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
-				logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
-				
-				# Appliquer la fonction sigmoïde pour obtenir la probabilité
-				y_values = self.sigmoid(logits_f[:, c])
-				
-				# Tracer la probabilité en fonction de la feature
-				ax = axes[f]
-				ax.plot(x_values, y_values, label=f'{self.classes[c]}')
-				ax.set_xlabel(df.columns[f])
-				ax.set_ylabel('Probabilité')
-				ax.grid(True)
-		
-		plt.tight_layout()
-		plt.show()
+		if np.max(y_batch) >= pred.shape[1]:
+			raise ValueError(f"Target index out of range: max(target)={np.max(y_batch)}, but pred.shape={pred.shape}")
 
-	def gradient_descent(self):
-		for _ in range(self.epochs):
-			logits = np.dot(self.features, self.W.T) + self.bias
-			pred = softmax(logits)
-			np.add.at(pred, (np.arange(self.m), self.target), -1)
-			self.W -= self.learning_rate / self.m * np.dot(pred.T, self.features)
-			self.bias -= self.learning_rate * (np.sum(pred, axis=0) / self.m)
-
-	def stochastic(self):
-		for i in range(self.m):
-			logits = np.dot(self.features.iloc[[i]], self.W.T) + self.bias
-			pred = softmax(logits)
-			pred[[0], self.target.iloc[[i]]] -= 1
-			self.W -= self.learning_rate * np.dot(pred.T, self.features.iloc[[i]])
-			self.bias -= self.learning_rate * np.sum(pred, axis=0)
-
-	def mini_batch(self):
-		loop = 20
-		batch_size = 50
-		offset = self.m % batch_size
-		batch_count = int(self.m / batch_size)
-
-		for _ in range(loop):
-			shuffled_features = self.features.sample(frac=1)
-			shuffled_target = self.target.reindex(shuffled_features.index)
-			for i in range(batch_count):
-				batch_features = shuffled_features.iloc[i * batch_size: (i + 1) * batch_size + (offset if i == batch_count - 1 else 0)]
-				batch_target = shuffled_target.iloc[i * batch_size: (i + 1) * batch_size + (offset if i == batch_count - 1 else 0)]
-
-				logits = np.dot(batch_features, self.W.T) + self.bias
-				pred = softmax(logits)
-				pred[range(batch_size + (offset if i == batch_count - 1 else 0)), batch_target] -= 1
-				self.W -= self.learning_rate * np.dot(pred.T, batch_features)
-				self.bias -= self.learning_rate * np.sum(pred, axis=0)
+		return -np.mean(np.log(pred[np.arange(len(y_batch)), y_batch]))
+	
+	def compute_gradient(self, X, Y, m, save_cost):
+		logits = np.dot(X, self.W.T) + self.bias
+		pred = softmax(logits)
+		if save_cost is True:
+			self.losses.append(self.compute_loss(pred))
+		np.add.at(pred, (np.arange(m), Y), -1)
+		self.W -= self.learning_rate / m * np.dot(pred.T, X)
+		self.bias -= self.learning_rate / m * np.sum(pred, axis=0)	
 
 	
-	def predict(self, data: pd.DataFrame, to_file: str = 'predictions.csv') -> pd.Series:
+	def gradient_descent(self, save_cost: bool = False):
+		for _ in range(self.epochs):
+			self.compute_gradient(
+				X = self.features,
+				Y = self.target,
+				m = self.m,
+				save_cost = save_cost
+				)
+
+	def stochastic(self, save_cost: bool = False):
+		for i in range(self.m):
+			self.compute_gradient(
+				X = self.features.iloc[[i]],
+				Y = self.target.iloc[[i]],
+				m = 1,
+				save_cost = save_cost
+				)
+
+	def mini_batch(self, batch_size: int = 32, save_cost: bool = False):
+		if batch_size <= 0:
+			raise ValueError(f"Wrong value for batch size : {batch_size}")
+		for _ in range(int(self.epochs / batch_size)):
+			indices = np.random.permutation(self.m)
+			for i in range(0, self.m, batch_size):
+				batch_indices = indices[i:i + batch_size]
+				self.compute_gradient(
+					X = self.features.iloc[batch_indices],
+					Y = self.target.iloc[batch_indices],
+					m = len(batch_indices),
+					save_cost = save_cost
+					)
+
+
+	def adam(self, beta1: float = 0.9, beta2: float = 0.999, batch_size: int = 32):
+		epsilon = 1e-8
+		m_w, v_w = np.zeros_like(self.W), np.zeros_like(self.W)
+		m_b, v_b = np.zeros_like(self.bias), np.zeros_like(self.bias)
+		t = 0
+
+		for _ in range(self.epochs):
+			indices = np.random.permutation(self.m)
+			for i in range(0, self.m, batch_size):
+				batch_indices = indices[i:i + batch_size]
+				X_batch, y_batch = self.features.iloc[batch_indices], self.target.iloc[batch_indices]
+				logits = np.dot(X_batch, self.W.T) + self.bias
+				probs = softmax(logits)
+				m = len(y_batch)
+				np.add.at(probs, (np.arange(m), y_batch), -1)
+				grad_w = np.dot(probs.T, X_batch) / m
+				grad_b = np.sum(probs, axis=0) / m
+
+				t += 1
+				m_w = beta1 * m_w + (1 - beta1) * grad_w
+				v_w = beta2 * v_w + (1 - beta2) * (grad_w ** 2)
+				m_b = beta1 * m_b + (1 - beta1) * grad_b
+				v_b = beta2 * v_b + (1 - beta2) * (grad_b ** 2)
+
+				m_w_hat = m_w / (1 - beta1 ** t)
+				v_w_hat = v_w / (1 - beta2 ** t)
+				m_b_hat = m_b / (1 - beta1 ** t)
+				v_b_hat = v_b / (1 - beta2 ** t)
+
+				self.W -= self.learning_rate * m_w_hat / (np.sqrt(v_w_hat) + epsilon)
+				self.bias -= self.learning_rate * m_b_hat / (np.sqrt(v_b_hat) + epsilon)
+
+				self.weight_history.append(self.W.copy())
+				self.bias_history.append(self.bias)
+				self.losses.append(self.compute_loss_adam(probs, y_batch))   
+
+	
+	def plot_adam_path(self):
+		fig = plt.figure()
+		ax = fig.add_subplot(111, projection='3d')
+
+		losses = np.array(self.losses)
+		weights = np.array([w.flatten() for w in self.weight_history])
+		biases = np.array(self.bias_history)
+
+		ax.plot(weights[:, 0], biases[:, 0], losses, marker='o', linestyle='-', color='b')
+		# ax.plot(weights[:, 0], np.mean(biases, axis=1), losses, marker='o', linestyle='-', color='b')
+
+		ax.set_xlabel('Weight Value')
+		ax.set_ylabel('Bias Value')
+		ax.set_zlabel('Loss')
+		ax.set_title('Adam Optimization Path')
+
+		plt.show()
+		plt.savefig('graphs/testing.png')
+	
+	def save_weights(self):
+		try:
+			path = 'datasets/weights.csv'
+			weights = pd.DataFrame()
+			weights[self.target.name] = pd.Series(self.classes.values())
+			weights['Bias'] = pd.Series(self.bias)
+			for i, f in enumerate(self.features):
+				weights[f] = pd.Series(self.W[:, i])
+			weights.to_csv(path, index=False)
+			print(f"Weights have been saved in {path}")
+		except Exception as e:
+			print(f'{type(e).__name__}: {e}')
+
+	def load_weights(self):
+		try:
+			weights = pd.read_csv('datasets/weights.csv')
+			self.bias = weights['Bias'].values
+			self.W = weights.iloc[:, 2:].values
+		except Exception as e:
+			print(f"{type(e).__name__} : {e}")
+
+	def predict(self, data: pd.DataFrame, to_file: str = 'datasets/predictions.csv') -> pd.Series:
 		logits = np.dot(data, self.W.T) + self.bias
 		probabilies = softmax(logits)
 		predictions = np.argmax(probabilies, axis=1)
@@ -139,30 +213,12 @@ class LogisticRegression():
 
 		if isinstance(to_file, str) is True:
 			formatted.to_csv(to_file, index=True, index_label='Index')
+			print(f"Predictions saved in {to_file}")
 
 		return formatted
 	
-	def load_weights(self):
-		try:
-			weights = pd.read_csv('weights.csv')
-			self.bias = weights['Bias'].values
-			self.W = weights.iloc[:, 2:].values
-		except Exception as e:
-			print(f"{type(e).__name__} : {e}")
-	
-	def save_weights(self):
-		try:
-			weights = pd.DataFrame()
-			weights[self.target.name] = pd.Series(self.classes.values())
-			weights['Bias'] = pd.Series(self.bias)
-			for i, f in enumerate(self.features):
-				weights[f] = pd.Series(self.W[:, i])
-			weights.to_csv('weights.csv', index=False)
-		except Exception as e:
-			print(f'{type(e).__name__}: {e}')
-
 	@staticmethod
-	def predict_from_weights(data: pd.DataFrame, weights: pd.DataFrame, to_file: str = 'predictions.csv') -> pd.Series:
+	def predict_from_weights(data: pd.DataFrame, weights: pd.DataFrame, to_file: str = 'datasets/predictions.csv') -> pd.Series:
 		try:
 			classes = {i: c for i, c in enumerate(weights.iloc[:, 0].values)}
 			bias = weights.iloc[:, 1].values
@@ -175,8 +231,45 @@ class LogisticRegression():
 
 			if isinstance(to_file, str):
 				formatted.to_csv(to_file, index=True, index_label='Index')
+				print(f"Predictions saved in {to_file}")
 
 			return formatted
 
 		except Exception as e:
 			print(f"{type(e).__name__} : {e}")
+	
+
+	# def plot_sigmoid(self, df: pd.DataFrame):
+	# 	""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
+	# 	fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
+
+	# 	for c in range(self.n_classes):  # Boucle sur chaque classe
+	# 		for f in range(self.n_features):  # Boucle sur chaque feature
+	# 			# Générer des valeurs pour la feature f
+	# 			x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
+				
+	# 			# Modifier les logits en fonction de la feature
+	# 			logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				
+	# 			# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
+	# 			logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
+				
+	# 			# Appliquer la fonction sigmoïde pour obtenir la probabilité
+	# 			y_values = self.sigmoid(logits_f[:, c])
+				
+	# 			# Tracer la probabilité en fonction de la feature
+	# 			ax = axes[f]
+	# 			ax.plot(x_values, y_values, label=f'{self.classes[c]}')
+	# 			ax.set_xlabel(df.columns[f])
+	# 			ax.set_ylabel('Probabilité')
+	# 			ax.grid(True)
+		
+	# 	plt.tight_layout()
+	# 	plt.show()
+
+
+
+
+
+
+	

@@ -6,7 +6,7 @@ class StandardScaler():
 		self.mean = {}
 		self.std = {}
 
-	def from_file(self, path: str = 'scaler.csv') -> "StandardScaler":
+	def from_file(self, path: str = 'datasets/scaler.csv') -> "StandardScaler":
 		try:
 			df = pd.read_csv(path)
 			self.features = df['Features'].values
@@ -34,13 +34,14 @@ class StandardScaler():
 		self.fit(df)
 		return self.transform(df)
 	
-	def save_to_file(self, path: str = 'scaler.csv'):
+	def save_to_file(self, path: str = 'datasets/scaler.csv'):
 		try:
 			scaler = pd.DataFrame()
 			scaler['Features'] = pd.Series(self.features)
 			scaler['Mean'] = pd.Series([v for k, v in self.mean.items()])
 			scaler['Std'] = pd.Series([v for k, v in self.std.items()])
 			scaler.to_csv(path, index=False)
+			print(f"Scaler have been saved in {path}")
 		except Exception as e:
 			print(f'{type(e).__name__}: {e}')
 

@@ -4,7 +4,7 @@ import pandas as pd
 
 def main():
 	try:
-		data = pd.read_csv("dataset_train.csv")
+		data = pd.read_csv("datasets/dataset_train.csv")
 		color_map = {
 			'Gryffindor': 'r',
 			'Slytherin': 'g',

@@ -13,6 +13,7 @@ MODEL = {
 
 def main():
 	help = False
+	model = 'batch'
 	try:
 		if len(sys.argv) < 2:
 			raise Exception(f"Usage: {sys.argv[0]} [options] <train_dataset.csv>")
@@ -21,9 +22,7 @@ def main():
 			raise Exception("Please provide a training dataset with .csv format.")
 		
 		if len (sys.argv) > 2:
-
 			skip = False
-			model = 'batch'
 			for i in range(1, len(sys.argv) - 1):
 				if skip is True:
 					skip = False

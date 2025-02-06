@@ -12,7 +12,7 @@ def main():
 			if file[-4:] != ".csv":
 				raise Exception(f"Wrong file format for {file}, expected: .csv")
 		
-		weights = pd.read_csv('weights.csv')
+		weights = pd.read_csv('datasets/weights.csv')
 		features = [f for f in weights.columns[2:]]
 
 		df = pd.read_csv(sys.argv[-1], index_col='Index')[features]
@@ -20,7 +20,7 @@ def main():
 		scaler = StandardScaler().from_file()
 		df[features] = scaler.transform(df[features])
 		
-		pred = LogisticRegression.predict_from_weights(df[features], weights, to_file='houses.csv')
+		pred = LogisticRegression.predict_from_weights(df[features], weights, to_file='datasets/houses.csv')
 		
 	except Exception as e:
 		print(f'{type(e).__name__} : {e}')
