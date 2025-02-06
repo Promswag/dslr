@@ -62,6 +62,15 @@ class LogisticRegression:
         pred = np.clip(pred, epsilon, 1 - epsilon)
         return -np.mean(np.log(pred[np.arange(self.m), self.target]))
 
+    def compute_loss_adam(self, pred, y_batch):
+        epsilon = 1e-15
+        pred = np.clip(pred, epsilon, 1 - epsilon)
+
+        if np.max(y_batch) >= pred.shape[1]:
+            raise ValueError(f"Target index out of range: max(target)={np.max(y_batch)}, but pred.shape={pred.shape}")
+
+        return -np.mean(np.log(pred[np.arange(len(y_batch)), y_batch]))
+
     def mini_batch_gd(self):
         for _ in range(self.epochs):
             indices = np.random.permutation(self.m)
@@ -87,6 +96,7 @@ class LogisticRegression:
                 X_batch, y_batch = self.features.iloc[batch_indices], self.target.iloc[batch_indices]
                 logits = np.dot(X_batch, self.W.T) + self.bias
                 probs = self.softmax(logits)
+                probs[range(len(y_batch)), y_batch] -= 1
                 grad_w = np.dot(probs.T, X_batch) / len(y_batch)
                 grad_b = np.sum(probs, axis=0) / len(y_batch)
 
@@ -106,7 +116,7 @@ class LogisticRegression:
 
                 self.weight_history.append(self.W.copy())
                 self.bias_history.append(self.bias)
-                self.losses.append(self.compute_loss(probs))
+                self.losses.append(self.compute_loss_adam(probs, y_batch))   
 
     def plot_adam_path(self):
         fig = plt.figure()
@@ -116,13 +126,16 @@ class LogisticRegression:
         weights = np.array([w.flatten() for w in self.weight_history])
         biases = np.array(self.bias_history)
 
-        ax.plot(weights[:, 0], biases, losses, marker='o', linestyle='-', color='b')
+        ax.plot(weights[:, 0], biases[:, 0], losses, marker='o', linestyle='-', color='b')
+        # ax.plot(weights[:, 0], np.mean(biases, axis=1), losses, marker='o', linestyle='-', color='b')
+
         ax.set_xlabel('Weight Value')
         ax.set_ylabel('Bias Value')
         ax.set_zlabel('Loss')
         ax.set_title('Adam Optimization Path')
 
         plt.show()
+        plt.savefig('testing.png')
 
     def softmax(self, logits):
         z = np.exp(logits - np.max(logits, axis=1, keepdims=True))

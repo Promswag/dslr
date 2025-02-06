@@ -18,15 +18,15 @@ def main():
 
     print("Standardized Features:\n", data.head(), '\n')
 
-    print("Gradient Descent Training:")
-    lr_gd = LogisticRegression(data, target, learning_rate=0.01, epochs=1000)
-    lr_gd.gradient_descent()
-    print("Weights (Gradient Descent):\n", lr_gd.W)
-    print("Bias (Gradient Descent):\n", lr_gd.bias)
+    # print("Gradient Descent Training:")
+    # lr_gd = LogisticRegression(data, target, learning_rate=0.01, epochs=1000)
+    # lr_gd.gradient_descent()
+    # print("Weights (Gradient Descent):\n", lr_gd.W)
+    # print("Bias (Gradient Descent):\n", lr_gd.bias)
 
-    pred_gd = lr_gd.predict(data)
-    accuracy_gd = compute_accuracy(pred_gd, target)
-    print("\nGradient Descent Accuracy:", accuracy_gd, "%")
+    # pred_gd = lr_gd.predict(data)
+    # accuracy_gd = compute_accuracy(pred_gd, target)
+    # print("\nGradient Descent Accuracy:", accuracy_gd, "%")
 
     print("\nAdam Training:")
     lr_adam = LogisticRegression(data, target, learning_rate=0.01, epochs=1000)
