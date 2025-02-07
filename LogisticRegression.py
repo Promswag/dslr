@@ -4,6 +4,7 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 # Adding plot_adam_path method to LogisticRegression class
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.animation as animation
 
 def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
 	numeric_features = df.select_dtypes(include='number').columns
@@ -93,7 +94,6 @@ class LogisticRegression():
 		np.add.at(pred, (np.arange(m), Y), -1)
 		self.W -= self.learning_rate / m * np.dot(pred.T, X)
 		self.bias -= self.learning_rate / m * np.sum(pred, axis=0)	
-
 	
 	def gradient_descent(self, save_cost: bool = False):
 		for _ in range(self.epochs):
@@ -239,35 +239,65 @@ class LogisticRegression():
 			print(f"{type(e).__name__} : {e}")
 	
 
-	# def plot_sigmoid(self, df: pd.DataFrame):
-	# 	""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
-	# 	fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
+	def plot_sigmoid(self, df: pd.DataFrame):
+		""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
+		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
 
-	# 	for c in range(self.n_classes):  # Boucle sur chaque classe
-	# 		for f in range(self.n_features):  # Boucle sur chaque feature
-	# 			# Générer des valeurs pour la feature f
-	# 			x_values = np.linspace(np.min(df.iloc[:, f]), np.max(df.iloc[:, f]), 1000)
+		for c in range(self.n_classes):
+			for f in range(self.n_features):
+				x_values = np.linspace(-5, 5, 100)
 				
-	# 			# Modifier les logits en fonction de la feature
-	# 			logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				logits_f = np.zeros((x_values.shape[0], self.n_classes))
+				logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]
+				y_values = self.sigmoid(logits_f[:, c])
 				
-	# 			# Pour chaque valeur de x_values, appliquer le poids de la feature f pour la classe c
-	# 			logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]  # Appliquer le poids et le biais pour la classe c
-				
-	# 			# Appliquer la fonction sigmoïde pour obtenir la probabilité
-	# 			y_values = self.sigmoid(logits_f[:, c])
-				
-	# 			# Tracer la probabilité en fonction de la feature
-	# 			ax = axes[f]
-	# 			ax.plot(x_values, y_values, label=f'{self.classes[c]}')
-	# 			ax.set_xlabel(df.columns[f])
-	# 			ax.set_ylabel('Probabilité')
-	# 			ax.grid(True)
+				ax = axes[f]
+				ax.plot(x_values, y_values, label=f'{self.classes[c]}')
+				ax.set_xlabel(df.columns[f])
+				ax.set_ylabel('Probability')
+				ax.grid(True)
 		
-	# 	plt.tight_layout()
-	# 	plt.show()
+		plt.tight_layout()
+		plt.savefig('graphs/sigmoid')
 
+	def realtime(self):
+		self.reset()
+		fig, axes = plt.subplots(ncols=3, figsize=(15,5))
+		lines = []
+		for f in range(self.n_features):
+			ax = axes[f]
+			ax.set_xlabel(self.features.columns[f])
+			ax.set_ylabel('Probability')
+			ax.set_xlim(-5, 5)
+			ax.set_ylim(0, 1)
+			c_lines = []
+			for c in range(self.n_classes):
+				line, = ax.plot([], [])
+				c_lines.append(line)
+			lines.append(c_lines)
 
+		x = np.linspace(-10, 10, 100)
+
+		def animate(i):
+			if i >= self.epochs:
+				anim.pause()
+			self.compute_gradient(
+				X = self.features,
+				Y = self.target, 
+				m = self.m,
+				save_cost=True
+				)
+			
+			for f in range(self.n_features):
+				for c in range(self.n_classes):
+					y = self.sigmoid(x * self.W[c, f] + self.bias[c])
+					lines[f][c].set_data(x, y)
+
+			return [l for line in lines for l in line]
+
+		anim = animation.FuncAnimation(fig, animate, frames=self.epochs+1, interval=1, blit=True)
+		plt.show()
+		anim.save('graphs/sigmoi_anim30.gif', writer='pillow', fps=30)
 
 
 
