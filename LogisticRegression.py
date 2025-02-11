@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -132,7 +131,7 @@ class LogisticRegression():
 		m_b, v_b = np.zeros_like(self.bias), np.zeros_like(self.bias)
 		t = 0
 
-		for _ in range(self.epochs / batch_size):
+		for _ in range(int(self.epochs / batch_size)):
 			indices = np.random.permutation(self.m)
 			for i in range(0, self.m, batch_size):
 				batch_indices = indices[i:i + batch_size]

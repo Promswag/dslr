@@ -56,6 +56,7 @@ def main():
 					ax.scatter(data[features[j]], data[features[i]], c=data['Colors'], alpha=0.4)
 
 		plt.subplots_adjust(left=0.075, bottom=0.01, right=0.99, top=0.90, wspace=0, hspace=0)
+		plt.savefig('graphs/pair_plot.png')
 		plt.show()
 
 	except Exception as e:

@@ -25,6 +25,7 @@ def main():
 		ax2.set_ylabel('Transfiguration')
 
 		plt.subplots_adjust(left=0.10, bottom=0.10, right=0.90, top=0.85, wspace=0.25)
+		plt.savefig('graphs/scatter_plot.png')
 		plt.show()
 
 	except Exception as e:

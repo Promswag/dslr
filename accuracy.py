@@ -3,8 +3,6 @@ import sys
 from sklearn.metrics import accuracy_score
 
 def main():
-	# df = pd.read_csv("datasets/dataset_train.csv")
-	# df['Hogwarts House'].to_csv("datasets/truth.csv", index_label='Index')
 	try:
 		predictions = pd.read_csv(sys.argv[1], index_col='Index')
 		truth = pd.read_csv(sys.argv[2], index_col='Index')

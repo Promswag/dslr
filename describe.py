@@ -71,10 +71,10 @@ def main():
         print('\nbonus:')
         print('range'.ljust(10) + ' '.join(f'{rng__[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('miss '.ljust(10) + ' '.join(f'{miss_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
-        print('skew_'.ljust(10) + ' '.join(f'{skew_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
-        print('kurt_'.ljust(10) + ' '.join(f'{kurt_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('skew '.ljust(10) + ' '.join(f'{skew_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('kurt '.ljust(10) + ' '.join(f'{kurt_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('kurtX'.ljust(10) + ' '.join(f'{kurtx[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
-        print('75%  '.ljust(10) + ' '.join(f'{pct69[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('69%  '.ljust(10) + ' '.join(f'{pct69[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
 
     except Exception as e:
         print(f'{type(e).__name__} : {e}')

@@ -39,7 +39,8 @@ def main():
         fig.legend(labels=['Ravenclaw', 'Slytherin', 'Gryffindor','Hufflepuff'],
                 loc='center', bbox_to_anchor=(0.68, 0.165), fontsize=16)
         plt.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.85)
-        plt.savefig('histogram.png')
+        plt.savefig('graphs/histogram.png')
+        plt.show()
 
     except Exception as e:
         print(f'{type(e).__name__} : {e}')
