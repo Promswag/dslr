@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import sys
 
 
 def pct(list, p):
@@ -20,7 +21,7 @@ def pct(list, p):
 
 def main():
     try:
-        data = pd.read_csv("datasets/dataset_train.csv")
+        data = pd.read_csv(sys.argv[1])
         data = data.select_dtypes(include=[np.number])
         data = data.drop(labels='Index', axis=1)
 
