@@ -22,6 +22,7 @@ def main():
     try:
         data = pd.read_csv("datasets/dataset_train.csv")
         data = data.select_dtypes(include=[np.number])
+        data = data.drop(labels='Index', axis=1)
 
         count = {str: int}
         mean_ = {str: int}
@@ -31,6 +32,11 @@ def main():
         pct50 = {str: int}
         pct75 = {str: int}
         maxi_ = {str: int}
+        rng__ = {str: int}
+        miss_ = {str: int}
+        skew_ = {str: int}
+        kurt_ = {str: int}
+        kurtx = {str: int}
 
         features = data.columns[1:]
 
@@ -44,8 +50,12 @@ def main():
             pct50[f] = pct(df.values, 50)
             pct75[f] = pct(df.values, 75)
             maxi_[f] = df[count[f] - 1]
+            rng__[f] = maxi_[f] - mini_[f] if count[f] > 0 else np.nan
+            miss_[f] = data[f].isna().sum()
+            skew_[f] = (1 / count[f]) * sum(((df - mean_[f]) / std__[f]) ** 3)
+            kurt_[f] = (1 / count[f]) * sum(((df - mean_[f]) / std__[f]) ** 4)
+            kurtx[f] = kurt_[f] - 3
 
-        # print(''.ljust(10) + ' '.join(f'{f}'.rjust(10) if len(f) < 11 else f'{f[:9]}.'.rjust(10) for f in features))
         print(''.ljust(10) + ' '.join(f'{f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('count'.ljust(10) + ' '.join(f'{count[f]:.0f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('mean '.ljust(10) + ' '.join(f'{mean_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
@@ -55,8 +65,12 @@ def main():
         print('50%  '.ljust(10) + ' '.join(f'{pct50[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('75%  '.ljust(10) + ' '.join(f'{pct75[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('max  '.ljust(10) + ' '.join(f'{maxi_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
-
-        print(data.describe())
+        print('\nbonus:')
+        print('range'.ljust(10) + ' '.join(f'{rng__[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('miss '.ljust(10) + ' '.join(f'{miss_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('skew_'.ljust(10) + ' '.join(f'{skew_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('kurt_'.ljust(10) + ' '.join(f'{kurt_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('kurtX'.ljust(10) + ' '.join(f'{kurtx[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
 
     except Exception as e:
         print(f'{type(e).__name__} : {e}')
