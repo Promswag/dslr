@@ -35,7 +35,7 @@ def outliers_clamping_by_std(df: pd.DataFrame, target_name: str, std_multiplier:
 	return df
 
 def softmax(logits):
-	z = np.exp(logits)
+	z = np.exp(np.clip(logits, -709, 709))
 	return z / np.sum(z, axis=1, keepdims=True)
 
 class LogisticRegression():
