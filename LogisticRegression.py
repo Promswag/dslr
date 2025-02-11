@@ -171,7 +171,6 @@ class LogisticRegression():
 		biases = np.array(self.bias_history)
 
 		ax.plot(weights[:, 0], biases[:, 0], losses, marker='o', linestyle='-', color='b')
-		# ax.plot(weights[:, 0], np.mean(biases, axis=1), losses, marker='o', linestyle='-', color='b')
 
 		ax.set_xlabel('Weight Value')
 		ax.set_ylabel('Bias Value')
@@ -263,7 +262,8 @@ class LogisticRegression():
 		for f in range(self.n_features):
 			ax = axes[f]
 			ax.set_xlabel(self.features.columns[f])
-			ax.set_ylabel('Probability')
+			if f == 0:
+				ax.set_ylabel('Probability')
 			ax.set_xlim(-5, 5)
 			ax.set_ylim(0, 1)
 			c_lines = []
@@ -276,7 +276,7 @@ class LogisticRegression():
 
 		def animate(i):
 			if i >= self.epochs:
-				return []
+				anim.pause()
 			self.compute_gradient(
 				X = self.features,
 				Y = self.target, 
@@ -292,5 +292,6 @@ class LogisticRegression():
 			return [l for line in lines for l in line]
 
 		anim = animation.FuncAnimation(fig, animate, frames=self.epochs+1, interval=1, blit=True)
-		anim.save('graphs/sigmoi_anim30.gif', writer='pillow', fps=30)
+		fig.legend(labels=['Ravenclaw', 'Slytherin', 'Gryffindor','Hufflepuff'],
+			loc='upper left', bbox_to_anchor=(0, 1), fontsize=10)
 		plt.show()

@@ -7,8 +7,8 @@ import os
 
 def main():
     try:
-        real_houses = pd.read_csv('datasets/dataset_train.csv')['Hogwarts House']
-        predicted_houses = pd.read_csv(f'datasets/{sys.argv[1]}.csv')['Hogwarts House']
+        real_houses = pd.read_csv(sys.argv[1])['Hogwarts House']
+        predicted_houses = pd.read_csv(sys.argv[2])['Hogwarts House']
 
         unique_houses = sorted(real_houses.unique())
         cm = confusion_matrix(real_houses, predicted_houses, labels=unique_houses)
