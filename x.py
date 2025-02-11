@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from LogisticRegression import LogisticRegression, fill_na
 from StandardScaler import StandardScaler
+from sklearn.metrics import accuracy_score
 
 def compute_accuracy(predictions, targets):
     return np.mean(predictions == targets) * 100
@@ -33,7 +34,7 @@ def main():
     # print("\nGradient Descent Accuracy:", accuracy_gd, "%")
 
     print("\nAdam Training:")
-    lr_adam = LogisticRegression(df[features], df[target], learning_rate=0.01, epochs=1000)
+    lr_adam = LogisticRegression(df[features], df[target], learning_rate=0.01, epochs=100)
     lr_adam.adam()
     print("Weights (Adam):\n", lr_adam.W)
     print("Bias (Adam):\n", lr_adam.bias)
@@ -43,7 +44,11 @@ def main():
     print("\nAdam Accuracy:", accuracy_adam, "%")
 
     # Plot Adam path in 3D
-    lr_adam.plot_adam_path()
+    # lr_adam.plot_adam_path()
+    
+    # correct = (pred_adam == df[target]).value_counts()
+    # print(correct, correct[0] / len(df[target]))
+    print(accuracy_score(pred_adam, df[target]))
 
 if __name__ == "__main__":
     main()

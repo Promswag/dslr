@@ -37,6 +37,7 @@ def main():
         skew_ = {str: int}
         kurt_ = {str: int}
         kurtx = {str: int}
+        pct69 = {str: int}
 
         features = data.columns[1:]
 
@@ -55,6 +56,7 @@ def main():
             skew_[f] = (1 / count[f]) * sum(((df - mean_[f]) / std__[f]) ** 3)
             kurt_[f] = (1 / count[f]) * sum(((df - mean_[f]) / std__[f]) ** 4)
             kurtx[f] = kurt_[f] - 3
+            pct69[f] = pct(df.values, 69)
 
         print(''.ljust(10) + ' '.join(f'{f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('count'.ljust(10) + ' '.join(f'{count[f]:.0f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
@@ -71,6 +73,7 @@ def main():
         print('skew_'.ljust(10) + ' '.join(f'{skew_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('kurt_'.ljust(10) + ' '.join(f'{kurt_[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
         print('kurtX'.ljust(10) + ' '.join(f'{kurtx[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
+        print('75%  '.ljust(10) + ' '.join(f'{pct69[f]:.3f}'.rjust(len(f)+1 if len(f) > 9 else 10) for f in features))
 
     except Exception as e:
         print(f'{type(e).__name__} : {e}')

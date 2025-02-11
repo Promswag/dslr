@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
-# Adding plot_adam_path method to LogisticRegression class
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as animation
 
 def fill_na(df: pd.DataFrame, target_name: str) -> pd.DataFrame:
@@ -134,7 +132,7 @@ class LogisticRegression():
 		m_b, v_b = np.zeros_like(self.bias), np.zeros_like(self.bias)
 		t = 0
 
-		for _ in range(self.epochs):
+		for _ in range(self.epochs / batch_size):
 			indices = np.random.permutation(self.m)
 			for i in range(0, self.m, batch_size):
 				batch_indices = indices[i:i + batch_size]
@@ -240,7 +238,6 @@ class LogisticRegression():
 	
 
 	def plot_sigmoid(self, df: pd.DataFrame):
-		""" Tracer la fonction sigmoïde pour chaque feature et chaque classe """
 		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
 
 		for c in range(self.n_classes):
@@ -280,7 +277,7 @@ class LogisticRegression():
 
 		def animate(i):
 			if i >= self.epochs:
-				anim.pause()
+				return []
 			self.compute_gradient(
 				X = self.features,
 				Y = self.target, 
@@ -296,10 +293,5 @@ class LogisticRegression():
 			return [l for line in lines for l in line]
 
 		anim = animation.FuncAnimation(fig, animate, frames=self.epochs+1, interval=1, blit=True)
-		plt.show()
 		anim.save('graphs/sigmoi_anim30.gif', writer='pillow', fps=30)
-
-
-
-
-	
+		plt.show()
