@@ -125,7 +125,7 @@ class LogisticRegression():
 					)
 
 
-	def adam(self, beta1: float = 0.9, beta2: float = 0.999, batch_size: int = 32):
+	def adam(self, beta1: float = 0.9, beta2: float = 0.999, batch_size: int = 32, save_cost: bool = True):
 		epsilon = 1e-8
 		m_w, v_w = np.zeros_like(self.W), np.zeros_like(self.W)
 		m_b, v_b = np.zeros_like(self.bias), np.zeros_like(self.bias)
@@ -244,7 +244,7 @@ class LogisticRegression():
 		plt.show()
 	
 
-	def plot_sigmoid(self, df: pd.DataFrame):
+	def plot_sigmoid(self):
 		fig, axes = plt.subplots(ncols=self.n_features, figsize=(self.n_features * 6, 8))
 		plt.suptitle(f"Sigmoid function for {self.target.name} predictions", fontsize=20)
 
@@ -258,7 +258,7 @@ class LogisticRegression():
 				
 				ax = axes[f]
 				ax.plot(x_values, y_values, label=f'{self.classes[c]}')
-				ax.set_xlabel(df.columns[f])
+				ax.set_xlabel(self.features.columns[f])
 				if f == 0:
 					ax.set_ylabel('Probability')
 				ax.grid(True)

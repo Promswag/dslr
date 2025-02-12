@@ -49,9 +49,11 @@ def main():
 				
 		features = [
 			'Defense Against the Dark Arts',
+			'Divination',
 			'Ancient Runes',
+			'History of Magic',
 			'Charms',
-		]
+			]
 		target = 'Hogwarts House'
 
 		df = pd.read_csv(sys.argv[-1])[features + [target]]
@@ -64,8 +66,11 @@ def main():
 		lr = LogisticRegression(df[features], df[target])
 		MODEL[model](lr, save_cost=True)
 		lr.save_weights()
+		# lr.plot_loss()
+		# lr.plot_sigmoid()
 	except Exception as e:
 		print(f'{type(e).__name__} : {e}')
+		raise e
 
 
 if __name__ == "__main__":

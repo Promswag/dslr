@@ -19,6 +19,7 @@ def main():
 
 		scaler = StandardScaler().from_file()
 		df[features] = scaler.transform(df[features])
+		df = df.fillna(0)
 		
 		pred = LogisticRegression.predict_from_weights(df[features], weights, to_file='datasets/houses.csv')
 		

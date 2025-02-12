@@ -4,9 +4,9 @@ from sklearn.metrics import accuracy_score
 
 def main():
 	try:
-		predictions = pd.read_csv(sys.argv[1], index_col='Index')
-		truth = pd.read_csv(sys.argv[2], index_col='Index')
-		print(accuracy_score(predictions, truth))
+		truth = pd.read_csv(sys.argv[1], index_col='Index')['Hogwarts House']
+		predictions = pd.read_csv(sys.argv[2], index_col='Index')
+		print(accuracy_score(truth, predictions))
 	except Exception as e:
 		print(f"{type(e).__name__} : {e}")
 
