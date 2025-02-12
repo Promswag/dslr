@@ -69,10 +69,10 @@ class LogisticRegression():
 	def sigmoid(self, x):
 		return 1 / (1 + np.exp(-np.clip(x, -709, 709)))
 
-	def compute_loss(self, pred):
+	def compute_loss(self, pred, Y, m):
 		epsilon = 1e-15
 		pred = np.clip(pred, epsilon, 1 - epsilon)
-		return -np.mean(np.log(pred[np.arange(self.m), self.target]))
+		return -np.mean(np.log(pred[np.arange(m), Y]))
 	
 	def compute_loss_adam(self, pred, y_batch):
 		epsilon = 1e-15
@@ -87,7 +87,7 @@ class LogisticRegression():
 		logits = np.dot(X, self.W.T) + self.bias
 		pred = softmax(logits)
 		if save_cost is True:
-			self.losses.append(self.compute_loss(pred))
+			self.losses.append(self.compute_loss(pred, Y, m))
 		np.add.at(pred, (np.arange(m), Y), -1)
 		self.W -= self.learning_rate / m * np.dot(pred.T, X)
 		self.bias -= self.learning_rate / m * np.sum(pred, axis=0)	
@@ -233,14 +233,24 @@ class LogisticRegression():
 
 		except Exception as e:
 			print(f"{type(e).__name__} : {e}")
+
+	def plot_loss(self):
+		plt.figure(figsize=(12,8))
+		plt.plot(range(len(self.losses)), self.losses)
+		plt.title("Cross-Entropy Loss function for Logistic Regression")
+		plt.xlabel("Iterations")
+		plt.ylabel("Error")
+		plt.savefig('graphs/loss.png')
+		plt.show()
 	
 
 	def plot_sigmoid(self, df: pd.DataFrame):
-		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15, 10))
+		fig, axes = plt.subplots(ncols=self.n_features, figsize=(self.n_features * 6, 8))
+		plt.suptitle(f"Sigmoid function for {self.target.name} predictions", fontsize=20)
 
 		for c in range(self.n_classes):
 			for f in range(self.n_features):
-				x_values = np.linspace(-5, 5, 100)
+				x_values = np.linspace(-10, 10, 100)
 				
 				logits_f = np.zeros((x_values.shape[0], self.n_classes))
 				logits_f[:, c] = x_values * self.W[c, f] + self.bias[c]
@@ -249,11 +259,13 @@ class LogisticRegression():
 				ax = axes[f]
 				ax.plot(x_values, y_values, label=f'{self.classes[c]}')
 				ax.set_xlabel(df.columns[f])
-				ax.set_ylabel('Probability')
+				if f == 0:
+					ax.set_ylabel('Probability')
 				ax.grid(True)
-		
+
 		plt.tight_layout()
 		plt.savefig('graphs/sigmoid')
+		plt.show()
 
 	def realtime(self):
 		self.reset()

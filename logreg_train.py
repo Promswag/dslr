@@ -62,10 +62,11 @@ def main():
 		scaler.save_to_file()
 
 		lr = LogisticRegression(df[features], df[target])
-		MODEL[model](lr)
+		MODEL[model](lr, save_cost=True)
 		lr.save_weights()
 	except Exception as e:
 		print(f'{type(e).__name__} : {e}')
+		raise e
 
 
 if __name__ == "__main__":
