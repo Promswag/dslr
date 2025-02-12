@@ -257,7 +257,7 @@ class LogisticRegression():
 
 	def realtime(self):
 		self.reset()
-		fig, axes = plt.subplots(ncols=3, figsize=(15,5))
+		fig, axes = plt.subplots(ncols=self.n_features, figsize=(15,5))
 		lines = []
 		for f in range(self.n_features):
 			ax = axes[f]
