@@ -66,7 +66,6 @@ def main():
 		lr.save_weights()
 	except Exception as e:
 		print(f'{type(e).__name__} : {e}')
-		raise e
 
 
 if __name__ == "__main__":
