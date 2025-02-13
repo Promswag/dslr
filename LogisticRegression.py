@@ -264,6 +264,8 @@ class LogisticRegression():
 				ax.grid(True)
 
 		plt.tight_layout()
+		fig.legend(labels=['Ravenclaw', 'Slytherin', 'Gryffindor','Hufflepuff'],
+			loc='upper left', bbox_to_anchor=(0, 1), fontsize=10)
 		plt.savefig('graphs/sigmoid')
 		plt.show()
 
