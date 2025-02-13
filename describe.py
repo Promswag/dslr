@@ -40,7 +40,7 @@ def main():
         kurtx = {str: int}
         pct69 = {str: int}
 
-        features = data.columns[1:]
+        features = data.columns
 
         for f in features:
             df = data[f].dropna().sort_values(ascending=True).reset_index(drop=True)
